@@ -1,0 +1,2118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Self-Similar Rectangles and Cuboids</title>
+<meta name="description" content="How one geometric series builds the golden rectangle, A-series paper, the Delian brick, and their relatives in every dimension.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Spectral:ital,wght@0,500;0,600;1,500&display=swap">
+<style>
+
+/* Layout: a specimen sheet. Shared-math panel up top, then a grid with one row per dimension and one column per equation; integer versions sit under the exact shape they approach. Cards expand into a full-screen explorer. */
+:root{
+  --paper:#e9eeec; --sheet:#f7f9f8; --ink:#1b2729; --muted:#5a6a6c; --rule:#cdd7d4;
+  --accent:#1d58b8; --sq:#86aaea; --fill-a:#f3f6f5; --fill-b:#bfcbc8; --chip:#e4eaf6; --warm:#b4532a;
+  --f-display:"Spectral", Georgia, "Times New Roman", serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#12181a; --sheet:#192124; --ink:#e2e9e7; --muted:#93a2a2; --rule:#2c393c;
+  --accent:#86b4ff; --sq:#3f6fc2; --fill-a:#2a3437; --fill-b:#54666a; --chip:#1f2e45; --warm:#e08a5f; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --paper:#12181a; --sheet:#192124; --ink:#e2e9e7; --muted:#93a2a2; --rule:#2c393c;
+  --accent:#86b4ff; --sq:#3f6fc2; --fill-a:#2a3437; --fill-b:#54666a; --chip:#1f2e45; --warm:#e08a5f; color-scheme:dark }
+
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body.locked{overflow:hidden}
+[hidden]{display:none!important}
+.wrap{max-width:1240px;margin:0 auto;padding-block:32px 64px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:flex;flex-direction:column;gap:28px}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(30px,4.4vw,46px);line-height:1.08;margin:0;letter-spacing:-0.012em;text-wrap:balance}
+.m{font-family:var(--f-mono);font-style:normal;font-size:0.9em;white-space:nowrap}
+.dek{margin:8px 0 0;color:var(--muted);max-width:70ch;font-size:16px}
+
+/* shared math */
+.math{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:24px 26px}
+@media (max-width:860px){.math{grid-template-columns:minmax(0,1fr)}}
+.math h2{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0 0 10px}
+.math p{margin:0 0 12px;max-width:66ch}
+.math p:last-child{margin:0}
+.eqbox{font-family:var(--f-mono);font-size:17px;text-align:center;padding:14px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);margin:0 0 12px}
+.eqbox small{display:block;font-family:var(--f-body);font-size:12px;color:var(--muted);margin-top:4px}
+.keys{display:flex;flex-direction:column;gap:8px;font-size:14px}
+.keys div{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;align-items:baseline}
+.keys b{font-family:var(--f-mono);font-weight:500;font-size:13px;color:var(--accent)}
+
+/* explorer shared styles */
+.sprow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.spcount{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.mini:disabled{opacity:.4;cursor:default}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+@media (max-width:880px){.stage{grid-template-columns:minmax(0,1fr)}}
+.viewport{position:relative;background:var(--sheet);border:1px solid var(--rule);border-radius:6px;aspect-ratio:4/3;max-width:100%;overflow:hidden}
+@media (max-width:880px){.viewport{aspect-ratio:1/1}}
+.viewport canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.pill{position:absolute;left:12px;top:12px;font-family:var(--f-mono);font-size:12px;padding:5px 10px;border-radius:999px;background:var(--sheet);border:1px solid var(--rule);color:var(--muted)}
+.pill.on{border-color:var(--accent);color:var(--accent)}
+.hint{position:absolute;right:12px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
+#growthUI .hint{top:12px;bottom:auto}
+.legend{position:absolute;left:12px;bottom:10px;display:flex;gap:14px;font-size:12px;color:var(--muted);pointer-events:none;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:2px;display:inline-block}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.seg button{font:500 13px var(--f-body);padding:6px 14px;background:transparent;color:var(--muted);border:0;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.seg button:disabled{opacity:0.4;cursor:default}
+.seg button+button{border-left:1px solid var(--rule)}
+.xrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.xbig{font-family:var(--f-display);font-style:italic;font-size:26px}
+input[type=number]{width:110px;font:500 15px var(--f-mono);padding:5px 8px;border:1px solid var(--rule);border-radius:5px;background:var(--paper);color:var(--ink);text-align:right}
+.sl{position:relative;padding-bottom:38px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;margin:0;display:block}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--rule);border-radius:2px}
+input[type=range]::-moz-range-track{height:4px;background:var(--rule);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--sheet);box-shadow:0 0 0 1px var(--accent);margin-top:-7px;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--sheet);box-shadow:0 0 0 1px var(--accent);cursor:pointer}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ticks{position:absolute;left:0;right:0;top:22px;height:20px;pointer-events:none}
+.tick{position:absolute;top:0;transform:translateX(-50%);font-family:var(--f-mono);font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;line-height:1}
+.tick::before{content:"";width:1px;height:6px;background:var(--muted);margin-bottom:3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 12px var(--f-body);padding:5px 10px;border-radius:5px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer;display:inline-flex;gap:6px;align-items:baseline}
+.chip span{font-family:var(--f-mono);color:var(--muted)}
+.chip.active{background:var(--chip);border-color:var(--accent)}
+#exactUI .toggles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 12px}
+#growthUI .toggles{display:flex;gap:16px;flex-wrap:wrap}
+.tg{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
+.tg input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;font-size:13px}
+dt{color:var(--muted)}
+dd{margin:0;font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tup{display:block;white-space:nowrap}
+.status{font-size:13px;padding:10px 12px;border-radius:5px;background:var(--paper);border:1px solid var(--rule)}
+.status b{font-weight:600}
+.status.on{border-color:var(--accent)}
+.stepbig{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.stepbig b{font-family:var(--f-display);font-style:italic;font-weight:500;font-size:26px}
+.stepbig span{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.btns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.btns button{font:500 13px var(--f-body);padding:7px 4px;border-radius:5px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer}
+.btns button.primary{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.seq{font-family:var(--f-mono);font-size:12px;line-height:1.7;color:var(--muted);overflow-wrap:anywhere}
+.seq b{color:var(--accent);font-weight:500}
+.meter{display:flex;flex-direction:column;gap:6px}
+.bar{height:6px;border-radius:3px;background:var(--rule);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.chart{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:16px 18px;min-width:0}
+.chart h2{font-family:var(--f-display);font-weight:600;font-size:18px;margin:0 0 2px}
+.chart p{margin:0 0 8px;color:var(--muted);font-size:13px}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{font-family:var(--f-mono);font-size:11px;fill:var(--muted)}
+.grid{stroke:var(--rule);stroke-width:1}
+.lim{stroke:var(--warm);stroke-width:1.5;stroke-dasharray:5 4;fill:none}
+.ln{stroke:var(--accent);stroke-width:2;fill:none}
+.ln-f{stroke:var(--accent);stroke-width:1;fill:none;opacity:0.25}
+.pt{fill:var(--accent)}
+.pt-f{fill:var(--accent);opacity:0.2}
+.cur{fill:var(--sheet);stroke:var(--accent);stroke-width:2.5}
+text.limt{fill:var(--warm)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start}
+.note{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:18px 20px;min-width:0}
+.note h2{font-family:var(--f-display);font-weight:600;font-size:20px;margin:0 0 10px;text-wrap:balance}
+.note p{margin:0 0 10px;max-width:65ch}
+.note p:last-child{margin-bottom:0}
+.note ul{margin:0 0 10px;padding-left:18px}
+.note li{margin-bottom:5px}
+.note .eq{font-family:var(--f-mono);font-size:13.5px;text-align:center;padding:8px 0;margin:0 0 10px;overflow-x:auto}
+.tblw{overflow-x:auto;margin-top:4px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+td.nm{color:var(--muted)}
+
+.secthead{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.secthead h2{font-family:var(--f-display);font-weight:600;font-size:clamp(25px,3vw,32px);margin:0;display:flex;gap:12px;align-items:baseline}
+.secthead h2 .n{font-family:var(--f-mono);font-size:14px;font-weight:500;color:var(--accent)}
+.secthead p{margin:0;color:var(--muted);max-width:78ch}
+.sub{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding-top:18px;border-top:1px solid var(--rule)}
+.sub h3{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.sub h3 span{font-family:var(--f-mono);font-size:13px;font-weight:500;color:var(--accent)}
+.sub p{margin:0;color:var(--muted);max-width:78ch}
+.block{display:flex;flex-direction:column;gap:18px}
+.spec{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.spec th,.spec td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.spec td.n{font-family:var(--f-mono);font-size:12.5px}
+.spec tr.g td{border-top:2px solid var(--rule)}
+.block .toggles{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.int .toggles{display:flex;gap:16px;flex-wrap:wrap}
+.int .hint{top:12px;bottom:auto}
+.mini{font:500 12px var(--f-body);padding:5px 10px;border-radius:5px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer}
+.tag{font-family:var(--f-display);font-style:italic;font-size:clamp(18px,2.2vw,22px);color:var(--muted);max-width:60ch;margin:10px 0 0;line-height:1.4}
+.explain{background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:14px 18px;margin:0;max-width:none}
+.explain b{font-weight:600}
+.nd .seg button{padding:6px 11px}
+.ndv svg{display:block;width:100%;height:100%}
+.ndv text{font-family:var(--f-mono);font-size:12px;fill:var(--muted)}
+.nd-h{font-family:var(--f-body);font-size:13px}
+.nd-l{font-size:13px;fill:var(--ink)}
+.nd-v{font-size:11.5px}
+.nd-bar{fill:var(--fill-b);stroke:var(--ink);stroke-opacity:.35}
+.nd-copy{fill:var(--fill-a);stroke:var(--ink);stroke-opacity:.35}
+.nd-gno{fill:var(--gno,#86aaea);stroke:var(--accent);stroke-opacity:.6}
+.nd-hit{stroke:var(--sq);stroke-width:3;stroke-opacity:1}
+.nd-in{font-family:var(--f-body);font-size:11px}
+.nd-in2{fill:var(--ink)}
+.nd-sep{stroke:var(--rule)}
+.nd-guide{stroke:var(--warm);stroke-width:1.5;stroke-dasharray:5 4}
+.nd-guide.on{stroke:var(--sq);stroke-width:2.5;stroke-dasharray:none}
+.nd-col{fill:var(--chip)}
+.nd-br{fill:none;stroke:var(--rule);stroke-width:1.5}
+.nd-rl{stroke:var(--warm);stroke-dasharray:4 4}
+.nd-dot{fill:var(--sheet);stroke:var(--accent);stroke-width:1.8;cursor:pointer}
+.nd-dot.pis{fill:var(--accent)}
+.nd-dot.cur{stroke:var(--warm);stroke-width:3}
+.chart text.nd-pl{fill:var(--accent);font-size:12px}
+.notes .note1{grid-column:1/-1;max-width:82ch;margin:0;color:var(--text2,var(--ink));line-height:1.65}
+.foot{display:flex;justify-content:flex-end;margin-top:72px;padding-top:18px;border-top:1px solid var(--rule)}
+.foot p{margin:0;font-size:13px;color:var(--muted)}
+.eqbox small.alt{margin-top:10px;line-height:1.5;font-family:var(--f-body)}
+.serdemo{display:flex;flex-direction:column;gap:6px;margin-top:20px;padding-top:16px;border-top:1px solid var(--rule)}
+.serdemo input[type=number]{width:100px}
+.serout{font-family:var(--f-mono);font-size:13px;color:var(--accent);line-height:1.7;margin:2px 0 0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.wrap{max-width:1240px}
+/* ---- open layout: only the geometry and its control panel are boxed ---- */
+.wrap{gap:0}
+header{padding-bottom:34px}
+.math{background:none;border:0;border-radius:0;padding:0;gap:48px}
+.math h2{font-family:var(--f-body);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--accent);margin:0 0 14px}
+.math p{color:var(--text2,var(--ink))}
+.eqbox{background:none;border:0;border-radius:0;border-bottom:1px solid var(--rule);font-family:var(--f-display);font-size:34px;text-align:left;padding:0 0 14px;margin:0 0 16px}
+.eqbox small{text-align:left;font-size:12.5px}
+.keys span{color:var(--text2,var(--ink))}
+.sec{border-top:1px solid var(--rule);margin-top:64px;padding-top:48px}
+.secthead{margin:0 0 8px;gap:8px}
+.eyebrow{font-family:var(--f-body);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--accent);margin:0}
+.secthead h2{font-size:clamp(32px,3.8vw,44px);line-height:1.08;color:var(--ink)}
+.secthead p{color:var(--muted);font-size:15.5px}
+.secthead p.lead{color:var(--text2,var(--ink));max-width:82ch;line-height:1.65}
+.stage{gap:0;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;overflow:hidden;align-items:stretch}
+.stage .viewport{border:0;border-radius:0;align-self:start;width:100%}
+.stage .panel{border:0;border-radius:0;border-left:1px solid var(--rule);background:var(--panel,var(--sheet))}
+@media (max-width:880px){.stage .panel{border-left:0;border-top:1px solid var(--rule)}}
+.explain{background:none;border:0;border-radius:0;padding:4px 0 0;color:var(--text2,var(--ink));max-width:82ch;line-height:1.65}
+.explain b{color:var(--ink)}
+.charts{gap:40px}
+.chart{background:none;border:0;border-radius:0;padding:0}
+.chart h2{font-size:18px;color:var(--ink)}
+.notes{gap:40px}
+.note{background:none;border:0;border-radius:0;padding:0}
+.note h2{font-size:18px;color:var(--ink)}
+.note p{color:var(--text2,var(--ink))}
+.sub{border-top:0;padding-top:36px;margin-top:20px}
+.sub h3{font-size:26px;color:var(--ink)}
+.sub p{color:var(--muted)}
+
+:root{--paper:#12181a; --sheet:#192124; --ink:#e2e9e7; --muted:#93a2a2; --rule:#2c393c;
+  --accent:#86b4ff; --sq:#3f6fc2; --fill-a:#2a3437; --fill-b:#54666a; --chip:#1f2e45; --warm:#e08a5f; color-scheme:dark;--sq:#e2b93b;--warm:#ff8f87;--gno:#3d6bb8;--muted:#a3b1b1;--text2:#c6d0ce;--panel:#1b2427;--sheet:#172023}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink)}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+img,canvas,svg{max-width:100%}
+
+</style>
+</head>
+<body>
+<div class="ssr">
+<div class="wrap">
+  <header>
+    <h1>Self-Similar Rectangles and Cuboids</h1>
+    <p class="tag">How one geometric series builds the golden rectangle, A-series paper, the Delian brick, and their relatives in every dimension.</p>
+  </header>
+
+  <section class="math" aria-labelledby="ssr-introH">
+    <div>
+      <h2 id="ssr-introH">Introduction</h2>
+      <p>A golden rectangle loses a square and leaves a smaller golden rectangle. A sheet of A4 paper folds into two smaller sheets of the same shape. Both belong to one family, which continues into three dimensions and beyond.</p>
+      <p>Every member is built from the geometric sequence <span class="m">1, r, r², r³, …</span> with common ratio <i>r</i> &gt; 1. A rectangle has sides in proportion <span class="m">1 : r</span>, a box has edges in proportion <span class="m">1 : r : r²</span>, and a <i>D</i>-dimensional box has edges <span class="m">1 : r : … : r<sup>D−1</sup></span>. The box <span class="m">(r, r², r³)</span> contains a copy of itself scaled by <span class="m">1/r</span>, the box <span class="m">(1, r, r²)</span>, and the piece left over is the <i>gnomon</i>. The copy contains its own copy, and so on: the nested boxes shrink by <span class="m">1/r</span> at each step, and the gnomons between them spiral toward one point along a logarithmic spiral.</p>
+      <p>Consecutive terms of the sequence give the edges of the nested boxes, not of the gnomons. The gnomon between <span class="m">(r, …, r<sup>D</sup>)</span> and its copy <span class="m">(1, …, r<sup>D−1</sup>)</span> has edges <span class="m">r, …, r<sup>D−1</sup></span> and <span class="m">r<sup>D</sup> − 1</span>, and that last edge is generally not a term of the sequence (with <i>r</i> = 1.3 in 2D it is 0.69). The special shapes are exactly the values of <i>r</i> where it is: <span class="m">r<sup>D</sup> − 1 = r<sup>k</sup></span>, which is the equation <span class="m">r<sup>D</sup> = r<sup>k</sup> + 1</span>. The sections below cover rectangles, cuboids and higher dimensions, then build integer approximations of three of the special shapes.</p>
+      <div class="serdemo">
+        <div class="xrow"><label class="label" for="ser_r">Try a value of r: the scale of each nested box, shrinking by 1/r per step</label><input id="ser_rnum" type="number" step="0.0001" min="1" max="10" aria-label="Common ratio r"></div>
+        <input id="ser_r" type="range" min="0" max="1" step="0.0001" aria-label="Common ratio r (logarithmic scale)">
+        <p class="serout" id="ser_out" aria-live="polite"></p>
+      </div>
+    </div>
+    <div>
+      <div class="eqbox">r<sup>D</sup> = r<sup>k</sup> + 1<small>D = dimension · k = 0, 1, …, D − 1</small><small class="alt">The box’s longest edge, r<sup>D</sup>, splits into the copy’s edge, 1, and the gnomon’s edge, r<sup>D</sup> − 1. The shape is special when r<sup>D</sup> − 1 = r<sup>k</sup>.</small></div>
+      <div class="keys">
+        <div><b>k = 0</b><span>The gnomon’s edge equals the copy’s edge, 1, so the gnomon is identical to the copy: one cut bisects the box into two identical, scaled-down copies.</span></div>
+        <div><b>k ≥ 1</b><span>The gnomon’s edge equals one of its other edges, r<sup>k</sup>, so the gnomon has square faces.</span></div>
+      </div>
+      <table class="spec"><thead><tr><th>Shape</th><th>Equation</th><th>r</th></tr></thead><tbody>
+        <tr><td>√2 rectangle</td><td class="n">r² = 2</td><td class="n">√2 ≈ 1.4142</td></tr>
+        <tr><td>Golden rectangle</td><td class="n">r² = r + 1</td><td class="n">φ ≈ 1.6180</td></tr>
+        <tr class="g"><td>Delian brick</td><td class="n">r³ = 2</td><td class="n">∛2 ≈ 1.2599</td></tr>
+        <tr><td>Plastic cuboid</td><td class="n">r³ = r + 1</td><td class="n">ρ ≈ 1.3247</td></tr>
+        <tr><td>Supergolden cuboid</td><td class="n">r³ = r² + 1</td><td class="n">ψ ≈ 1.4656</td></tr>
+      </tbody></table>
+    </div>
+  </section>
+
+  <section class="block sec" id="ssr-rectangles" aria-labelledby="ssr-h1">
+    <div class="secthead"><p class="eyebrow">Section 1 · Two dimensions</p><h2 id="ssr-h1">Rectangles</h2>
+      <p>Rectangles with sides in proportion <span class="m">1 : r</span>. Drag <i>r</i>, or select the √2 rectangle or the golden rectangle.</p></div>
+<section class="stage">
+    <div class="viewport">
+      <canvas id="e2_view" aria-label="3D model of the subdivided cuboid"></canvas>
+      <div class="pill" id="e2_pill">—</div>
+      <div class="hint" id="e2_hint">Drag to orbit · scroll or pinch to zoom</div>
+    </div>
+
+    <aside class="panel">
+
+      <div>
+        <div class="xrow">
+          <label class="xbig" for="e2_x">r</label>
+          <input id="e2_xnum" type="text" inputmode="decimal" aria-label="Common ratio r (type ∞ for infinity)">
+        </div>
+        <div class="sl">
+          <input id="e2_x" type="range" min="0" max="1" step="0.0001" aria-label="Common ratio r, from 1 to infinity">
+          <div class="ticks" id="e2_ticks"></div>
+        </div>
+        <label class="tg"><input type="checkbox" id="e2_anyR"> Any real r, from −∞ to ∞</label>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span class="label">Special values</span>
+        <div class="chips" id="e2_chips"></div>
+      </div>
+
+      <div class="status" id="e2_status">—</div>
+
+      <div class="sprow">
+        <label class="tg"><input type="checkbox" id="e2_spOn"> Spiral <span class="spcount" id="e2_spLbl"></span></label>
+        <button id="e2_spNext" class="mini" type="button">Next vertices</button>
+      </div>
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="e2_dive"> Zoom loop</label>
+        <label class="tg"><input type="checkbox" id="e2_xray"> X-ray</label>
+        <label class="tg" id="e2_turnwrap"><input type="checkbox" id="e2_turn" checked> Turntable</label>
+      </div>
+
+      <div>
+        <div class="xrow"><label class="label" for="e2_explode">Explode</label><span class="m" id="e2_exOut">0.00</span></div>
+        <input id="e2_explode" type="range" min="0" max="0.6" step="0.01" value="0">
+      </div>
+
+      <dl>
+        <dt>Scale (×1/r per step)</dt><dd id="e2_serOut"></dd>
+        <dt id="e2_boxLbl">Nested boxes</dt><dd id="e2_boxOut"></dd>
+        <dt>Gnomons</dt><dd id="e2_cubOut"></dd>
+        <dt>Gnomon edges</dt><dd id="e2_slabOut"></dd>
+        <dt>Drawn</dt><dd id="e2_nOut"></dd>
+      </dl>
+    </aside>
+  </section>
+  </section>
+
+  <section class="block sec" id="ssr-cuboids" aria-labelledby="ssr-h2">
+    <div class="secthead"><p class="eyebrow">Section 2 · Three dimensions</p><h2 id="ssr-h2">Cuboids</h2>
+      <p>Boxes with edges in proportion <span class="m">1 : r : r²</span>. Drag <i>r</i>, or select the Delian brick, the plastic cuboid, the supergolden cuboid or the √2 cuboid.</p></div>
+<section class="stage">
+    <div class="viewport">
+      <canvas id="e3_view" aria-label="3D model of the subdivided cuboid"></canvas>
+      <div class="pill" id="e3_pill">—</div>
+      <div class="hint" id="e3_hint">Drag to orbit · scroll or pinch to zoom</div>
+    </div>
+
+    <aside class="panel">
+
+      <div>
+        <div class="xrow">
+          <label class="xbig" for="e3_x">r</label>
+          <input id="e3_xnum" type="text" inputmode="decimal" aria-label="Common ratio r (type ∞ for infinity)">
+        </div>
+        <div class="sl">
+          <input id="e3_x" type="range" min="0" max="1" step="0.0001" aria-label="Common ratio r, from 1 to infinity">
+          <div class="ticks" id="e3_ticks"></div>
+        </div>
+        <label class="tg"><input type="checkbox" id="e3_anyR"> Any real r, from −∞ to ∞</label>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span class="label">Special values</span>
+        <div class="chips" id="e3_chips"></div>
+      </div>
+
+      <div class="status" id="e3_status">—</div>
+
+      <div class="sprow">
+        <label class="tg"><input type="checkbox" id="e3_spOn"> Spiral <span class="spcount" id="e3_spLbl"></span></label>
+        <button id="e3_spNext" class="mini" type="button">Next vertices</button>
+      </div>
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="e3_dive"> Zoom loop</label>
+        <label class="tg"><input type="checkbox" id="e3_xray"> X-ray</label>
+        <label class="tg" id="e3_turnwrap"><input type="checkbox" id="e3_turn" checked> Turntable</label>
+      </div>
+
+      <div>
+        <div class="xrow"><label class="label" for="e3_explode">Explode</label><span class="m" id="e3_exOut">0.00</span></div>
+        <input id="e3_explode" type="range" min="0" max="0.6" step="0.01" value="0">
+      </div>
+
+      <dl>
+        <dt>Scale (×1/r per step)</dt><dd id="e3_serOut"></dd>
+        <dt id="e3_boxLbl">Nested boxes</dt><dd id="e3_boxOut"></dd>
+        <dt>Gnomons</dt><dd id="e3_cubOut"></dd>
+        <dt>Gnomon edges</dt><dd id="e3_slabOut"></dd>
+        <dt>Drawn</dt><dd id="e3_nOut"></dd>
+      </dl>
+    </aside>
+  </section>
+    <p class="explain"><b>How it works.</b> The box <span class="m">r × r² × r³</span> contains its copy, <span class="m">1 × r × r²</span>, on their shared <span class="m">r × r²</span> face. What remains is the gnomon, <span class="m">r × r² × (r³ − 1)</span>. The same cut repeats inside the copy, turned 120° each time, so the gnomons spiral into one corner. The gnomon is special when <span class="m">r³ − 1</span> matches another edge: it equals 1 for the Delian brick (so the gnomon is a second copy), <i>r</i> for the plastic cuboid and <i>r²</i> for the supergolden cuboid. Turn on the spiral to trace one of the four conical spirals that together pass through every vertex.</p>
+  </section>
+
+  <section class="block sec" id="ssr-nd" aria-labelledby="ssr-h3">
+    <div class="secthead"><p class="eyebrow">Section 3 · Any dimension</p><h2 id="ssr-h3">N-dimensional cuboids</h2>
+      <p class="lead">A <i>D</i>-dimensional box with edges <span class="m">(r, r², …, r<sup>D</sup>)</span> contains its copy, scaled by <span class="m">1/r</span>, with edges <span class="m">(1, r, …, r<sup>D−1</sup>)</span>. They share the <span class="m">D − 1</span> edges <span class="m">r, …, r<sup>D−1</sup></span>, all of different lengths. Along the longest edge, <span class="m">r<sup>D</sup></span>, the copy takes 1 and the gnomon takes <span class="m">r<sup>D</sup> − 1</span>, so the gnomon’s edges are <span class="m">r, …, r<sup>D−1</sup></span> and <span class="m">r<sup>D</sup> − 1</span>. The gnomon is special exactly when <span class="m">r<sup>D</sup> − 1 = r<sup>k</sup></span> for some <span class="m">k = 0, 1, …, D − 1</span>: for <span class="m">k = 0</span> the edge matches the copy’s edge, 1, and for <span class="m">k ≥ 1</span> it matches one of the gnomon’s own edges. This is the equation <span class="m">r<sup>D</sup> = r<sup>k</sup> + 1</span>. The expression <span class="m">r<sup>D</sup> − r<sup>k</sup> − 1</span> equals −1 at <i>r</i> = 1 and increases for <i>r</i> &gt; 1, so each equation has exactly one root above 1, and every dimension has exactly <i>D</i> special values. As <i>D</i> grows they crowd toward 1, so the special boxes approach a cube. Only φ, ρ, ψ and θ₂ ≈ 1.3803 (in 4D) are Pisot numbers, with ρ appearing again in 5D; no other dimension up to 40 has one.</p></div>
+    <div class="stage nd">
+      <div class="viewport ndv">
+        <svg id="nd_bars" viewBox="0 0 640 480" role="img" aria-label="Edge lengths of the box, the copy and the gnomon"></svg>
+      </div>
+      <aside class="panel">
+        <div class="row"><span class="label">Dimension D</span><div class="seg" id="nd_dims" role="group" aria-label="Dimension"></div></div>
+        <div>
+          <div class="xrow"><label class="xbig" for="nd_r">r</label><input id="nd_rnum" type="number" step="0.0001" min="1" max="10" aria-label="Common ratio r"></div>
+          <input id="nd_r" type="range" min="0" max="1" step="0.0001" aria-label="Common ratio r (logarithmic scale)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span class="label">Special values in this dimension</span>
+          <div class="chips" id="nd_chips"></div>
+        </div>
+        <div class="status" id="nd_status">—</div>
+        <dl>
+          <dt>Nested box</dt><dd id="nd_box"></dd>
+          <dt>Gnomon</dt><dd id="nd_gno"></dd>
+        </dl>
+      </aside>
+    </div>
+
+  </section>
+
+  <section class="block sec" id="ssr-integer" aria-labelledby="ssr-h4">
+    <div class="secthead"><p class="eyebrow">Section 4 · Whole numbers</p><h2 id="ssr-h4">Integer approximations</h2>
+      <p>Integer sequences that follow the same equations build whole-number versions of three special shapes. Each added piece has exactly square faces, and the shapes converge to the exact ones because φ, ρ and ψ are Pisot numbers. Each animation starts when it scrolls into view; press Play or click the model to run it again.</p></div>
+    <div class="block int" id="ssr-int-fib">
+      <div class="sub"><h3>Fibonacci tiling <span>→ golden rectangle</span></h3><p id="gfib_lede"></p></div>
+<section class="stage">
+    <div class="viewport">
+      <canvas id="gfib_view" aria-label="Model of the integer spiral"></canvas>
+      <div class="pill" id="gfib_pill">—</div>
+      <div class="hint" id="gfib_hint"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--sq)"></i><span id="gfib_sqLbl">squares</span></span>
+        <span><i class="sw" style="border:2px solid var(--warm)"></i><span id="gfib_limLbl">exact limit</span></span>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="stepbig"><b id="gfib_stepOut">Step 0</b><span id="gfib_dimOut"></span></div>
+      <div class="btns">
+        <button id="gfib_bRestart" aria-label="Restart">Restart</button>
+        <button id="gfib_bBack" aria-label="Previous step">Back</button>
+        <button id="gfib_bPlay" class="primary">Play</button>
+        <button id="gfib_bFwd" aria-label="Next step">Next</button>
+      </div>
+      <input id="gfib_step" type="range" min="0" max="20" step="1" value="0" aria-label="Step">
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="gfib_ghost" checked> Exact outline</label>
+        <label class="tg" id="gfib_turnwrap"><input type="checkbox" id="gfib_turn" checked> Turntable</label>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span class="label" id="gfib_seqLbl">Numbers</span>
+        <div class="seq" id="gfib_seqOut"></div>
+      </div>
+      <dl id="gfib_dl"></dl>
+      <div class="meter">
+        <div class="stepbig"><span class="label">Shape error</span><span id="gfib_errOut"></span></div>
+        <div class="bar"><i id="gfib_errBar"></i></div>
+      </div>
+    </aside>
+  </section>
+<section class="charts">
+    <div class="chart">
+      <h2>Ratio of consecutive terms</h2>
+      <p id="gfib_c1cap"></p>
+      <svg id="gfib_c1" viewBox="0 0 600 230" role="img" aria-label="Ratio of consecutive terms converging to the limit"></svg>
+    </div>
+    <div class="chart">
+      <h2>Distance from exact growth</h2>
+      <p id="gfib_c2cap"></p>
+      <svg id="gfib_c2" viewBox="0 0 600 230" role="img" aria-label="Edge error shrinking geometrically"></svg>
+    </div>
+  </section>
+<section class="notes" id="gfib_notes"></section>
+    </div>
+    <div class="block int" id="ssr-int-pad">
+      <div class="sub"><h3>Padovan cuboid spiral <span>→ plastic cuboid</span></h3><p id="gpad_lede"></p></div>
+<section class="stage">
+    <div class="viewport">
+      <canvas id="gpad_view" aria-label="Model of the integer spiral"></canvas>
+      <div class="pill" id="gpad_pill">—</div>
+      <div class="hint" id="gpad_hint"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--sq)"></i><span id="gpad_sqLbl">squares</span></span>
+        <span><i class="sw" style="border:2px solid var(--warm)"></i><span id="gpad_limLbl">exact limit</span></span>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="stepbig"><b id="gpad_stepOut">Step 0</b><span id="gpad_dimOut"></span></div>
+      <div class="btns">
+        <button id="gpad_bRestart" aria-label="Restart">Restart</button>
+        <button id="gpad_bBack" aria-label="Previous step">Back</button>
+        <button id="gpad_bPlay" class="primary">Play</button>
+        <button id="gpad_bFwd" aria-label="Next step">Next</button>
+      </div>
+      <input id="gpad_step" type="range" min="0" max="20" step="1" value="0" aria-label="Step">
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="gpad_ghost" checked> Exact outline</label>
+        <label class="tg" id="gpad_turnwrap"><input type="checkbox" id="gpad_turn" checked> Turntable</label>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span class="label" id="gpad_seqLbl">Numbers</span>
+        <div class="seq" id="gpad_seqOut"></div>
+      </div>
+      <dl id="gpad_dl"></dl>
+      <div class="meter">
+        <div class="stepbig"><span class="label">Shape error</span><span id="gpad_errOut"></span></div>
+        <div class="bar"><i id="gpad_errBar"></i></div>
+      </div>
+    </aside>
+  </section>
+<section class="charts">
+    <div class="chart">
+      <h2>Ratio of consecutive terms</h2>
+      <p id="gpad_c1cap"></p>
+      <svg id="gpad_c1" viewBox="0 0 600 230" role="img" aria-label="Ratio of consecutive terms converging to the limit"></svg>
+    </div>
+    <div class="chart">
+      <h2>Distance from exact growth</h2>
+      <p id="gpad_c2cap"></p>
+      <svg id="gpad_c2" viewBox="0 0 600 230" role="img" aria-label="Edge error shrinking geometrically"></svg>
+    </div>
+  </section>
+<section class="notes" id="gpad_notes"></section>
+    </div>
+    <div class="block int" id="ssr-int-nar">
+      <div class="sub"><h3>Narayana cuboid spiral <span>→ supergolden cuboid</span></h3><p id="gnar_lede"></p></div>
+<section class="stage">
+    <div class="viewport">
+      <canvas id="gnar_view" aria-label="Model of the integer spiral"></canvas>
+      <div class="pill" id="gnar_pill">—</div>
+      <div class="hint" id="gnar_hint"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--sq)"></i><span id="gnar_sqLbl">squares</span></span>
+        <span><i class="sw" style="border:2px solid var(--warm)"></i><span id="gnar_limLbl">exact limit</span></span>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="stepbig"><b id="gnar_stepOut">Step 0</b><span id="gnar_dimOut"></span></div>
+      <div class="btns">
+        <button id="gnar_bRestart" aria-label="Restart">Restart</button>
+        <button id="gnar_bBack" aria-label="Previous step">Back</button>
+        <button id="gnar_bPlay" class="primary">Play</button>
+        <button id="gnar_bFwd" aria-label="Next step">Next</button>
+      </div>
+      <input id="gnar_step" type="range" min="0" max="20" step="1" value="0" aria-label="Step">
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="gnar_ghost" checked> Exact outline</label>
+        <label class="tg" id="gnar_turnwrap"><input type="checkbox" id="gnar_turn" checked> Turntable</label>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span class="label" id="gnar_seqLbl">Numbers</span>
+        <div class="seq" id="gnar_seqOut"></div>
+      </div>
+      <dl id="gnar_dl"></dl>
+      <div class="meter">
+        <div class="stepbig"><span class="label">Shape error</span><span id="gnar_errOut"></span></div>
+        <div class="bar"><i id="gnar_errBar"></i></div>
+      </div>
+    </aside>
+  </section>
+<section class="charts">
+    <div class="chart">
+      <h2>Ratio of consecutive terms</h2>
+      <p id="gnar_c1cap"></p>
+      <svg id="gnar_c1" viewBox="0 0 600 230" role="img" aria-label="Ratio of consecutive terms converging to the limit"></svg>
+    </div>
+    <div class="chart">
+      <h2>Distance from exact growth</h2>
+      <p id="gnar_c2cap"></p>
+      <svg id="gnar_c2" viewBox="0 0 600 230" role="img" aria-label="Edge error shrinking geometrically"></svg>
+    </div>
+  </section>
+<section class="notes" id="gnar_notes"></section>
+    </div>
+  </section>
+  <footer class="foot"><p>Copyright &copy; 2026 Andrew Clifton</p></footer>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Self-Similar Rectangles and Cuboids. Requires three.js r128 (window.THREE). */
+(function(){
+"use strict";
+if(typeof THREE==="undefined"){console.warn("Self-Similar Rectangles and Cuboids: three.js not found");}
+const ACT={};
+
+function root(D,k){let lo=1,hi=2.2;for(let i=0;i<100;i++){const m=(lo+hi)/2;(Math.pow(m,D)-Math.pow(m,k)-1>0)?hi=m:lo=m;}return (lo+hi)/2;}
+const V3={
+  add:(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],
+  sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],
+  mul:(a,k)=>[a[0]*k,a[1]*k,a[2]*k],
+  dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
+  dist:(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]),
+  mv:(M,v)=>[0,1,2].map(i=>M[i][0]*v[0]+M[i][1]*v[1]+M[i][2]*v[2]),
+  mtv:(M,v)=>[0,1,2].map(i=>M[0][i]*v[0]+M[1][i]*v[1]+M[2][i]*v[2]),
+  rot:(v,k,a)=>{const c=Math.cos(a),s=Math.sin(a),d=k[0]*v[0]+k[1]*v[1]+k[2]*v[2];
+    return [v[0]*c+(k[1]*v[2]-k[2]*v[1])*s+k[0]*d*(1-c),
+            v[1]*c+(k[2]*v[0]-k[0]*v[2])*s+k[1]*d*(1-c),
+            v[2]*c+(k[0]*v[1]-k[1]*v[0])*s+k[2]*d*(1-c)];}
+};
+function det3(m){return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);}
+function solve3(M,b){const d0=det3(M);return [0,1,2].map(c=>det3(M.map((row,i)=>row.map((v,j)=>j===c?b[i]:v)))/d0);}
+/* Build the tiling of the bounding cuboid (edges s0·r^i) for dimension D (2 or 3), common ratio r, explode factor e. */
+function model(D,r,e,maxN){
+  const {add,sub,mul,dist,mv,mtv,rot}=V3;
+  const s0=6/Math.pow(r,D-1);
+  // a frame lists the box's local axes from shortest to longest: world axis a, direction d
+  let frame=D===3?[{a:1,d:1},{a:2,d:1},{a:0,d:1}]:[{a:1,d:1},{a:0,d:1}];
+  let lo=[0,0,0],hi=[0,0,0],s=s0;
+  frame.forEach((f,i)=>{const L=s*Math.pow(r,i);lo[f.a]=-L/2;hi[f.a]=L/2;});
+  const box0={lo:lo.slice(),hi:hi.slice()};
+  const N=Math.min(maxN,Math.ceil(Math.log(4000)/Math.log(r))+D);
+  const ne=Math.pow(r,D)-1;let match=-1;
+  for(let k=0;k<D;k++){if(Math.abs(ne-Math.pow(r,k))/Math.pow(r,k)<0.004){match=k;break;}}
+  const pieces=[];let F0=null;
+  for(let k=0;k<N;k++){
+    const L=frame[D-1], len=s*Math.pow(r,D-1), ct=s/r;   // copy's thickness along the long axis
+    const sl=lo.slice(), sh=hi.slice(), cl=lo.slice(), ch=hi.slice();
+    if(L.d>0){sh[L.a]=lo[L.a]+len-ct;cl[L.a]=hi[L.a]-ct;}
+    else{sl[L.a]=hi[L.a]-(len-ct);ch[L.a]=lo[L.a]+ct;}
+    const sqA=match>=1?(D===3?frame[2-match].a:2):-1;     // world axis normal to the square faces
+    pieces.push({lo:sl,hi:sh,s,sqA,c:[0,1,2].map(a=>(sl[a]+sh[a])/2)});
+    // the copy's axes: cyclic shift with two (3D) or one (2D) reversal — a proper rotation
+    const nf=D===3?[{a:L.a,d:-L.d},{a:frame[0].a,d:-frame[0].d},{a:frame[1].a,d:frame[1].d}]
+                  :[{a:L.a,d:-L.d},{a:frame[0].a,d:frame[0].d}];
+    if(k===0)F0={e:frame,lo:lo.slice(),hi:hi.slice(),e2:nf,lo2:cl.slice(),hi2:ch.slice()};
+    frame=nf;lo=cl;hi=ch;s=ct;
+  }
+  const vec=f=>{const v=[0,0,0];v[f.a]=f.d;return v;};
+  const org=(fr,l,h)=>{const o=[0,0,0];fr.forEach(f=>{o[f.a]=f.d>0?l[f.a]:h[f.a];});return o;};
+  // T(w) = o2 + R(w − o)/r maps the box onto its copy; R = Σ e2_i e_iᵀ
+  const R=[[0,0,0],[0,0,0],[0,0,0]];
+  F0.e.forEach((f,i)=>{const a=vec(f),b=vec(F0.e2[i]);for(let u=0;u<3;u++)for(let w=0;w<3;w++)R[u][w]+=b[u]*a[w];});
+  if(D===2)R[2][2]=1;
+  const o=org(F0.e,F0.lo,F0.hi), o2=org(F0.e2,F0.lo2,F0.hi2), Ro=mv(R,o);
+  const p=solve3([0,1,2].map(i=>[0,1,2].map(j=>(i===j?1:0)-R[i][j]/r)),[0,1,2].map(i=>o2[i]-Ro[i]/r));
+  const theta=Math.acos(Math.max(-1,Math.min(1,(R[0][0]+R[1][1]+R[2][2]-1)/2)));
+  let axis=[R[2][1]-R[1][2],R[0][2]-R[2][0],R[1][0]-R[0][1]];const an=Math.hypot(...axis);axis=axis.map(v=>v/an);
+  const T=w=>add(p,mul(mv(R,sub(w,p)),1/r));
+  const Tinv=w=>add(p,mul(mtv(R,sub(w,p)),r));
+  const curve=(q,t)=>add(p,mul(rot(sub(q,p),axis,theta*t),Math.pow(r,-t)));
+  const corners=pc=>{const out=[];const zs=D===3?[pc.lo[2],pc.hi[2]]:[0];
+    for(const X of [pc.lo[0],pc.hi[0]])for(const Y of [pc.lo[1],pc.hi[1]])for(const Z of zs)out.push([X,Y,Z]);return out;};
+  const tol=1e-7*s0;
+  // exploding moves piece k by e·(c_k − p); this commutes with T, so displaced vertices are orbits of displaced piece-0 vertices
+  const off=mul(sub(pieces[0].c,p),e);
+  const V0=corners(pieces[0]), V1=corners(pieces[1]);
+  const shared=V0.filter(v=>V1.some(u=>dist(u,v)<tol));
+  const main=shared.map(w=>add(Tinv(w),off));
+  const qs=V0.map(v=>add(v,off));
+  const hasPred=qs.map((qi,i)=>qs.some((qj,j)=>{if(j===i)return false;let w=qj;for(let m=1;m<=6;m++){w=T(w);if(dist(w,qi)<tol)return true;}return false;}));
+  const all=qs.filter((q,i)=>!hasPred[i]);
+  const core={lo:lo.slice(),hi:hi.slice(),s};   // the part of the bounding cuboid not yet subdivided after N steps
+  return {D,r,s0,N,pieces,box0,core,match,R,p,axis,theta,T,Tinv,curve,corners,main,all,e,tol};
+}
+
+/* Any real r. 0 < |r| < 1 gives the same shape as 1/|r| (the sequence read from the other end).
+   r < 0 is a negative homothety: each step scales by 1/|r| and also turns through a point reflection
+   about the copy's centre, which maps the box onto its copy, so the tiling stays valid.
+   In 2D the point reflection is a 180° turn (the spiral reverses); in 3D it reverses orientation
+   (a rotoreflection), so there is no continuous spiral. */
+function modelSigned(D,r,e,maxN){
+  const a=Math.abs(r), b=a<1?1/a:a;
+  const M=model(D,b,e,maxN);
+  M.rIn=r;M.neg=r<0;M.recip=a<1;M.improper=false;
+  if(r>0)return M;
+  const {add,sub,mul,dist,rot}=V3;
+  const cs=M.corners(M.box0).map(M.T);
+  const c1=[0,1,2].map(i=>(Math.min(...cs.map(v=>v[i]))+Math.max(...cs.map(v=>v[i])))/2);
+  const sg=D===3?[-1,-1,-1]:[-1,-1,1];
+  const S=w=>[0,1,2].map(i=>sg[i]<0?2*c1[i]-w[i]:w[i]);
+  const T=w=>S(M.T(w));
+  const R=M.R.map((row,i)=>row.map(v=>v*sg[i]));
+  const t0=T([0,0,0]);
+  const p=solve3([0,1,2].map(i=>[0,1,2].map(j=>(i===j?1:0)-R[i][j]/b)),t0);
+  const Tinv=w=>{const d=sub(w,t0);return [0,1,2].map(i=>b*(R[0][i]*d[0]+R[1][i]*d[1]+R[2][i]*d[2]));};
+  const bbox=vs=>{const lo=[0,1,2].map(i=>Math.min(...vs.map(v=>v[i]))),hi=[0,1,2].map(i=>Math.max(...vs.map(v=>v[i])));return {lo,hi,c:[0,1,2].map(i=>(lo[i]+hi[i])/2)};};
+  // square faces exist exactly when the positive model says so (r^D = r^k + 1, within the same tolerance);
+  // the square face is then the pair of nearly equal edges, so mark the axis normal to it
+  const sqOf=bx=>{if(M.match<1)return -1;if(D===2)return 2;const E=[0,1,2].map(i=>bx.hi[i]-bx.lo[i]);
+    const d=[Math.abs(E[1]-E[2])/E[1],Math.abs(E[0]-E[2])/E[0],Math.abs(E[0]-E[1])/E[0]];return d.indexOf(Math.min(...d));};
+  let vs=M.corners(M.pieces[0]);const pieces=[];
+  for(let k=0;k<M.N;k++){const bx=bbox(vs);bx.s=M.pieces[k].s;bx.sqA=sqOf(bx);pieces.push(bx);vs=vs.map(T);}
+  let cv=M.corners(M.box0);for(let k=0;k<M.N;k++)cv=cv.map(T);
+  const core=bbox(cv);core.s=M.core.s;
+  const out=Object.assign({},M,{pieces,core,p,R,T,Tinv,main:[]});
+  if(D===3){out.improper=true;out.theta=0;out.axis=[0,0,1];out.curve=null;out.all=[];return out;}
+  // 2D: the step is still a proper rotation (by the original angle + 180°), so the spiral exists, turning the other way
+  const theta=Math.acos(Math.max(-1,Math.min(1,(R[0][0]+R[1][1]+R[2][2]-1)/2)));
+  let axis=[R[2][1]-R[1][2],R[0][2]-R[2][0],R[1][0]-R[0][1]];const an=Math.hypot(...axis)||1;axis=axis.map(v=>v/an);
+  const curve=(q,t)=>add(p,mul(rot(sub(q,p),axis,theta*t),Math.pow(b,-t)));
+  const off=mul(sub(pieces[0].c,p),e), tol=M.tol;
+  const qs=M.corners(pieces[0]).map(v=>add(v,off));
+  const hasPred=qs.map((qi,i)=>qs.some((qj,j)=>{if(j===i)return false;let w=qj;for(let m=1;m<=6;m++){w=T(w);if(dist(w,qi)<tol)return true;}return false;}));
+  return Object.assign(out,{theta,axis,curve,all:qs.filter((q,i)=>!hasPred[i])});
+}
+
+const PHI=(1+Math.sqrt(5))/2, PSI=1.465571231876768, RHO=1.324717957244746;
+const SEQS={
+  fib:{key:'fib',name:'Fibonacci',D:2,k:1,r:PHI,alpha:1/PHI,N:20,sym:'φ',rule:'aₙ₊₂ = aₙ₊₁ + aₙ',eq:'r² = r + 1',limit:'golden rectangle',prop:'1 : φ'},
+  pad:{key:'pad',name:'Padovan',D:3,k:1,r:RHO,alpha:1/Math.sqrt(RHO),N:32,sym:'ρ',rule:'aₙ₊₃ = aₙ₊₁ + aₙ',eq:'r³ = r + 1',limit:'plastic cuboid',prop:'1 : ρ : ρ²'},
+  nar:{key:'nar',name:'Narayana',D:3,k:2,r:PSI,alpha:1/Math.sqrt(PSI),N:30,sym:'ψ',rule:'aₙ₊₃ = aₙ₊₂ + aₙ',eq:'r³ = r² + 1',limit:'supergolden cuboid',prop:'1 : ψ : ψ²'}
+};
+/* Integer version of the self-similar construction: box edges (aₙ, …, aₙ₊D₋₁), aₙ₊D = aₙ₊ₖ + aₙ. */
+function buildSpiral(S){
+  const {D,k,N,r}=S;
+  const A=Array(D).fill(1);while(A.length<N+D+4)A.push(A[A.length-D+k]+A[A.length-D]);
+  const F0=D===3?[{a:1,d:1},{a:2,d:1},{a:0,d:1}]:[{a:1,d:1},{a:0,d:1}];
+  let F=F0.map(f=>({...f})), lo=[0,0,0], hi=[1,1,D===3?1:0];
+  const boxes=[{lo:lo.slice(),hi:hi.slice(),F}], pieces=[{lo:lo.slice(),hi:hi.slice(),sqA:D===2?2:-1,ax:-1}];
+  for(let j=1;j<=N;j++){
+    const S0=F[0], ext=A[j+D-1]-A[j-1];
+    const pl=lo.slice(), ph=hi.slice();
+    if(S0.d>0){pl[S0.a]=hi[S0.a];ph[S0.a]=hi[S0.a]+ext;hi=hi.slice();hi[S0.a]+=ext;}
+    else{ph[S0.a]=lo[S0.a];pl[S0.a]=lo[S0.a]-ext;lo=lo.slice();lo[S0.a]-=ext;}
+    let sqA=2;   // 2D: the piece is a square in the xy-plane
+    if(D===3)sqA=ext===A[j]?F[2].a:F[1].a;   // the equal pair is (ext, mid) or (ext, long)
+    pieces.push({lo:pl,hi:ph,sqA,ax:S0.a,dir:S0.d});
+    F=D===3?[{a:F[1].a,d:-F[1].d},{a:F[2].a,d:F[2].d},{a:F[0].a,d:-F[0].d}]
+           :[{a:F[1].a,d:F[1].d},{a:F[0].a,d:-F[0].d}];
+    boxes.push({lo:lo.slice(),hi:hi.slice(),F});
+  }
+  const vec=f=>{const v=[0,0,0];v[f.a]=f.d;return v;};
+  const Q=boxes.map(b=>{const M=[[0,0,0],[0,0,0],[0,0,0]];b.F.forEach((f,i)=>{const e=vec(f),e0=vec(F0[i]);for(let u=0;u<3;u++)for(let w=0;w<3;w++)M[u][w]+=e0[u]*e[w];});if(D===2)M[2][2]=1;return M;});
+  let f=Array(D).fill(1);for(let i=D;i<=90;i++)f.push(f[i-D+k]+f[i-D]);const C=f[90]/Math.pow(r,90);
+  const err=n=>Math.max(...Array.from({length:D},(_,i)=>Math.abs(A[n+i]-C*Math.pow(r,n+i))));
+  return {S,A,boxes,pieces,Q,C,err,F0};
+}
+
+
+(function(){
+if(typeof THREE==='undefined')return;
+const $=id=>document.getElementById(id);
+const POOL=220, XMIN=1, XMAX=1e5, XDEG=1.00025;   // largest finite r; below XDEG the box is drawn as an undivided cube
+// slider position p in [0, 1] maps to r = 1/(1 − p): p = ½ → 2, ¾ → 4, ⅞ → 8, …, p = 1 → ∞
+// default slider: p in [0, 1] → r = 1/(1 − p): ½ → 2, ¾ → 4, ⅞ → 8, …, 1 → ∞.
+// any-real-r slider: u = 4p − 2 in [−2, 2]; |u| ≤ 1 is r = u, |u| in [1, 2] is r = ±1/(2 − |u|); r and 1/r give the same shape
+const uOf=r=>r===Infinity?2:r===-Infinity?-2:Math.abs(r)<=1?r:Math.sign(r)*(2-1/Math.abs(r));
+const rOf=u=>u>=2?Infinity:u<=-2?-Infinity:Math.abs(u)<=1?u:Math.sign(u)/(2-Math.abs(u));
+const toPos=r=>state.anyR?(uOf(r)+2)/4:(r===Infinity?1:1-1/r);
+const fromPos=p=>state.anyR?rOf(p*4-2):(p>=1?Infinity:1/(1-p));
+const fmtR=v=>v===Infinity?'∞':v===-Infinity?'−∞':(v<0?'−':'')+Math.abs(v).toFixed(4);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NAMES={'2-0':'√2 rectangle','2-1':'Golden rectangle','3-0':'Delian brick','3-1':'Plastic cuboid','3-2':'Supergolden cuboid'};
+const TICK={'2-0':'√2','2-1':'φ','3-0':'∛2','3-1':'ρ','3-2':'ψ'};
+const SUP=['⁰','¹','²','³','⁴','⁵','⁶'];
+const LET='abcdefgh';
+const eqText=(D,k)=>k===0?`r${SUP[D]} = 2`:k===1?`r${SUP[D]} = r + 1`:`r${SUP[D]} = r${SUP[k]} + 1`;
+const f4=v=>v.toFixed(4);
+const state={D:2,x:(1+Math.sqrt(5))/2,explode:0,xray:false,dive:false,spiral:true,spIdx:0,turn:!reduce,anyR:false};
+$('e2_turn').checked=state.turn;
+
+/* ---------- scene ---------- */
+const canvas=$('e2_view');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(30,1,0.02,600);
+scene.add(new THREE.AmbientLight(0xffffff,0.62));
+const sun=new THREE.DirectionalLight(0xffffff,0.55);sun.position.set(-4,9,6);scene.add(sun);
+const fillL=new THREE.DirectionalLight(0xffffff,0.2);fillL.position.set(6,-3,-5);scene.add(fillL);
+const group=new THREE.Group();group.matrixAutoUpdate=false;scene.add(group);
+const unit=new THREE.BoxGeometry(1,1,1), unitE=new THREE.EdgesGeometry(unit);
+const col={fa:new THREE.Color(),fb:new THREE.Color(),ink:new THREE.Color(),acc:new THREE.Color(),sq:new THREE.Color(),bg:new THREE.Color()};
+const items=[];
+for(let i=0;i<POOL;i++){
+  const mb=new THREE.MeshLambertMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+  const ms=mb.clone();
+  const base=[mb,mb,mb,mb,mb,mb];
+  const byAxis=[0,1,2].map(A=>base.map((m,j)=>(j>>1)===A?ms:mb));
+  const mesh=new THREE.Mesh(unit,base);
+  const lm=new THREE.LineBasicMaterial({transparent:true});
+  mesh.add(new THREE.LineSegments(unitE,lm));
+  mesh.visible=false;group.add(mesh);
+  items.push({mesh,mb,ms,base,byAxis,lm});
+}
+const limitMat=new THREE.LineBasicMaterial();
+const limitLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3,0,0),new THREE.Vector3(3,0,0)]),limitMat);
+limitLine.visible=false;group.add(limitLine);
+const coreItem=(()=>{const mb=new THREE.MeshLambertMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+  const mesh=new THREE.Mesh(unit,mb), lm=new THREE.LineBasicMaterial({transparent:true});mesh.add(new THREE.LineSegments(unitE,lm));
+  mesh.visible=false;group.add(mesh);return {mesh,mb,lm,size:0,k:0};})();
+// spirals: up to 8 curves, each a line plus dots at the vertices it passes through
+const SPN=4000, SPC=8, DOTN=300;
+const dotTex=(()=>{const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');g.beginPath();g.arc(16,16,12,0,Math.PI*2);g.fillStyle='#fff';g.fill();return new THREE.CanvasTexture(c);})();
+const spLineMat=new THREE.LineBasicMaterial({vertexColors:true,depthTest:false,transparent:true});
+const dotMat=new THREE.PointsMaterial({size:6,sizeAttenuation:false,map:dotTex,transparent:true,alphaTest:0.5,depthTest:false});
+const spirals=[];
+for(let i=0;i<SPC;i++){
+  const pos=new Float32Array(SPN*3), cc=new Float32Array(SPN*3), ts=new Float32Array(SPN);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(cc,3));
+  const line=new THREE.Line(g,spLineMat);line.renderOrder=10;line.frustumCulled=false;group.add(line);
+  const dpos=new Float32Array(DOTN*3), dts=new Float32Array(DOTN);
+  const dg=new THREE.BufferGeometry();dg.setAttribute('position',new THREE.BufferAttribute(dpos,3));
+  const pts=new THREE.Points(dg,dotMat);pts.renderOrder=11;pts.frustumCulled=false;group.add(pts);
+  spirals.push({pos,cc,ts,g,line,n:0,dpos,dts,dg,pts,dn:0,on:false});
+}
+
+function readTheme(){
+  const cs=getComputedStyle(document.querySelector('.ssr')||document.documentElement), g=n=>cs.getPropertyValue(n).trim();
+  col.fa.set(g('--fill-a'));col.fb.set(g('--fill-b'));col.ink.set(g('--ink'));
+  col.acc.set(g('--accent'));col.sq.set(g('--sq'));col.bg.set(g('--sheet'));
+  renderer.setClearColor(col.bg,1);
+  items.forEach(it=>{it.lm.color.copy(col.ink);it.ms.color.copy(col.sq);});
+  if(typeof coreItem!=='undefined')coreItem.lm.color.copy(col.ink);
+  if(typeof limitMat!=='undefined')limitMat.color.copy(col.ink);
+  dotMat.color.copy(col.acc);
+}
+readTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readTheme);
+new MutationObserver(readTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------- build ---------- */
+let G=null, Pv=new THREE.Vector3(), Ax=new THREE.Vector3();
+function build(){
+  const ax=Math.abs(state.x), line=!isFinite(state.x)||state.x===0, deg=!line&&ax<XDEG&&ax>1/XDEG;
+  G=modelSigned(state.D,line?50:deg?XDEG:state.x,state.explode,POOL);G.deg=deg;G.line=line;
+  Pv.set(...G.p);Ax.set(...G.axis);
+  const e=G.e, p=G.p;
+  // core: the undivided remainder (or the whole cube at r = 1)
+  // at r = 1 the whole figure is one exact square or cube, side 6
+  // at r = ∞ every edge but the longest is negligible in proportion: the box is drawn as a line along its longest axis
+  const w=0.012, cb=line?{lo:[-3,-w,state.D===3?-w:0],hi:[3,w,state.D===3?w:0]}:deg?{lo:[-3,-3,state.D===3?-3:0],hi:[3,3,state.D===3?3:0]}:G.core, cc=[0,1,2].map(a=>(cb.lo[a]+cb.hi[a])/2), ce=(deg||line)?0:e;
+  G.thin=Math.min(1,Math.pow(G.r,G.D-1)-1/G.r);   // gnomon thickness relative to its shortest other edge
+  coreItem.mesh.position.set(cc[0]+ce*(cc[0]-p[0]),cc[1]+ce*(cc[1]-p[1]),cc[2]+ce*(cc[2]-p[2]));
+  coreItem.mesh.scale.set(...[0,1,2].map(a=>Math.max(cb.hi[a]-cb.lo[a],1e-3)));
+  coreItem.size=line?6:deg?G.s0:G.core.s;coreItem.k=(deg||line)?0:G.N;G.deg=deg||line;
+  items.forEach((it,i)=>{
+    if(i>=G.N||deg||line){it.mesh.visible=false;return;}
+    const pc=G.pieces[i], c=pc.c;
+    it.mesh.position.set(c[0]+e*(c[0]-p[0]),c[1]+e*(c[1]-p[1]),c[2]+e*(c[2]-p[2]));
+    it.mesh.scale.set(Math.max(pc.hi[0]-pc.lo[0],1e-3),Math.max(pc.hi[1]-pc.lo[1],1e-3),Math.max(pc.hi[2]-pc.lo[2],1e-3));
+    it.mesh.material=pc.sqA>=0?it.byAxis[pc.sqA]:it.base;
+  });
+  // fixed order: spiral 1 is the one that stays most inside the shape from r ≈ 1.24 upward (every special value);
+  // keeping the order fixed means each numbered spiral is the same spiral at every r, so nothing jumps
+  const ORDER={2:[1,0],3:[3,2,0,1]};
+  if(!G.neg&&G.all.length===(G.D===3?4:2))G.all=ORDER[G.D].map(i=>G.all[i]);
+  // when there are no spirals (r = ±1, 0, ±∞, or a 3D rotoreflection) keep the chosen number untouched
+  const nAll=G.all.length;if(!Number.isInteger(state.spIdx)||state.spIdx<0)state.spIdx=0;
+  const idx=nAll?state.spIdx%nAll:0;if(nAll)state.spIdx=idx;
+  const curves=state.spiral&&nAll&&!deg&&!line&&!G.improper?[G.all[idx]]:[];
+  $('e2_spLbl').textContent=G.improper?'(none: each step is a rotoreflection)':nAll?`(${idx+1} of ${nAll})`:'';
+  $('e2_spNext').disabled=!state.spiral||!!G.improper;
+  const Ns=Math.min(G.N,Math.ceil(Math.log(800)/Math.log(G.r))+3);
+  const per=Math.max(6,Math.min(36,Math.floor((SPN-1)/(Ns+1))));
+  spirals.forEach((sp,ci)=>{
+    sp.on=ci<curves.length;sp.line.visible=sp.on;sp.pts.visible=sp.on;
+    if(!sp.on)return;
+    const q=curves[ci];let n=0;
+    for(let j=0;j<=(Ns-1)*per&&n<SPN;j++){const t=j/per, v=G.curve(q,t);   // start at the shape's outer vertex, so the spiral stays within it
+      sp.pos[n*3]=v[0];sp.pos[n*3+1]=v[1];sp.pos[n*3+2]=v[2];sp.ts[n]=t;n++;}
+    sp.n=n;sp.g.setDrawRange(0,n);sp.g.attributes.position.needsUpdate=true;
+    let dn=0;
+    for(let k=0;k<=Ns-1&&dn<DOTN;k++){const v=G.curve(q,k);sp.dpos[dn*3]=v[0];sp.dpos[dn*3+1]=v[1];sp.dpos[dn*3+2]=v[2];sp.dts[dn]=k;dn++;}
+    sp.dn=dn;sp.dg.attributes.position.needsUpdate=true;
+  });
+  updateReadouts(curves.length);
+}
+
+/* ---------- UI ---------- */
+const specials=D=>Array.from({length:D},(_,k)=>{const r=root(D,k);return {k,r,x:r,name:NAMES[D+'-'+k],tick:TICK[D+'-'+k],eq:eqText(D,k)};});
+function renderControls(){
+  const sp=specials(state.D);
+  const scale=state.anyR?[[-Infinity,'−∞'],[-2,'−2'],[-1,'−1'],[0,'0'],[1,'1'],[2,'2'],[Infinity,'∞']]:[[1,'1'],[2,'2'],[4,'4'],[8,'8'],[16,'16'],[Infinity,'∞']];
+  $('e2_ticks').innerHTML=scale.map(([v,l])=>`<span class="tick sc" style="left:calc(9px + ${toPos(v)} * (100% - 18px));top:0">${l}</span>`).join('')
+    +sp.map((s,i)=>`<span class="tick" style="left:calc(9px + ${toPos(s.x)} * (100% - 18px));top:${i%2?16:0}px">${s.tick}</span>`).join('');
+  const extra=state.D===3?[{name:'√2 cuboid',x:Math.SQRT2}]:[];
+  const negs=state.anyR?sp.map(q=>({name:'−'+q.tick,x:-q.x})).concat([{name:'1/'+sp[sp.length-1].tick,x:1/sp[sp.length-1].x},{name:'0',x:0}]):[];
+  $('e2_chips').innerHTML=sp.concat(extra).concat(negs).map(s=>`<button class="chip" data-x="${s.x}">${s.name}<span>r = ${f4(s.x)}</span></button>`).join('');
+  $('e2_chips').querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>setX(+b.dataset.x)));
+  $('e2_turnwrap').hidden=state.D!==3;$('e2_turn').disabled=state.D!==3;$('e2_boxLbl').textContent=state.D===3?'Nested boxes':'Nested rectangles';
+  $('e2_hint').textContent=state.D===3?'Drag to orbit · scroll or pinch to zoom':'Scroll to zoom at the cursor · drag to pan · double-click to reset';
+  $('e2_spOn').checked=state.spiral;$('e2_anyR').checked=state.anyR;
+}
+function updateReadouts(nc){
+  const {D,match}=G, x=state.x, r=G.deg?1:G.r;
+  $('e2_x').value=toPos(x);if(document.activeElement!==$('e2_xnum'))$('e2_xnum').value=fmtR(x);
+  if(G.line){
+    $('e2_serOut').textContent=x===0?'1, 0, 0, …':'1, 0, 0, … (in the limit)';
+    $('e2_boxOut').innerHTML=`<span class="tup">${D===3?'0 : 0 : 1':'0 : 1'} in proportion</span>`;
+    $('e2_cubOut').textContent='none';$('e2_nOut').textContent='limit';
+    $('e2_status').innerHTML=x===0
+      ?`<b>r = 0.</b> Every term after the first is 0, so in proportion every edge except one has length 0 and the ${D===3?'box':'rectangle'} is a line: the same limit as r = ±∞, since r and 1/r give the same shape.`
+      :`<b>r = ${fmtR(x)}.</b> Each edge is infinitely longer than the one before, so in proportion every edge except the longest shrinks to nothing and the ${D===3?'box':'rectangle'} collapses to a line.`;
+    $('e2_status').classList.remove('on');$('e2_pill').textContent='r = '+fmtR(x);$('e2_pill').classList.remove('on');
+    $('e2_chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+    return;
+  }
+  if(G.deg){
+    $('e2_serOut').textContent='1, 1, 1, 1, …';$('e2_boxOut').innerHTML=D===3?'<span class="tup">(1, 1, 1)</span><span class="tup">…</span>':'<span class="tup">(1, 1)</span><span class="tup">…</span>';
+    $('e2_cubOut').textContent='none';$('e2_slabOut').textContent='none';$('e2_nOut').textContent='1 piece';
+    $('e2_status').innerHTML=`<b>r = ${x<0?'−1':'1'}.</b> Every edge has length |r|ⁿ = 1, so the ${D===3?'box is a cube':'rectangle is a square'} and does not subdivide.`;
+    $('e2_status').classList.remove('on');$('e2_pill').textContent='r = '+(x<0?'−1':'1');$('e2_pill').classList.remove('on');
+    $('e2_chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+    return;
+  }
+  // outer box (r, …, r^D); each nested box is the previous one scaled by 1/r;
+  // first gnomon (r, …, r^(D−1), r^D − 1), each later one scaled by 1/r
+  const sup=n=>String(n).replace(/-/g,'⁻').replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  const fmt=v=>{if(v>=1e-3&&v<1e5)return (+v.toPrecision(3)).toString();const [m,e]=v.toExponential(2).split('e');return (+m)+'\u00a0×\u00a010'+sup(+e);};
+  const tup=a=>'<span class="tup">('+a.slice().sort((p,q)=>p-q).map(fmt).join(', ')+')</span>';
+  const win=n=>Array.from({length:D},(_,i)=>Math.pow(r,i+1-n));
+  const gno=n=>Array.from({length:D-1},(_,i)=>Math.pow(r,i+1-n)).concat([Math.pow(r,-n)*(Math.pow(r,D)-1)]);
+  const f=Math.abs(x)<1?x:1/x, sgn=v=>(v<0?'−':'')+fmt(Math.abs(v));   // signed factor per step; a negative factor includes a point reflection
+  $('e2_serOut').textContent=Array.from({length:5},(_,n)=>sgn(Math.pow(f,n))).join(', ')+', …';
+  $('e2_boxOut').innerHTML=[0,1,2].map(n=>tup(win(n))).join('')+'<span class="tup">…</span>';
+  $('e2_cubOut').innerHTML=[0,1,2].map(n=>tup(gno(n))).join('')+'<span class="tup">…</span>';
+  $('e2_slabOut').textContent=D===3?'r, r², r³ − 1':'r, r² − 1';
+  $('e2_nOut').textContent=`${G.N} pieces`;
+  const sp=specials(D);
+  let near=sp[0];sp.forEach(s=>{if(Math.abs(s.x-r)<Math.abs(near.x-r))near=s;});
+  let note='';
+  if(G.recip)note+=`Because |r| &lt; 1, the sequence shrinks instead of growing: the shape is the same as for |r| = ${f4(r)} (that is, 1/|r|), read from the other end. `;
+  if(G.neg)note+=D===3
+    ?`A negative ratio adds a point reflection to each step. In 3D that reverses orientation, so each step is a rotoreflection: the pieces alternate sides and there is no continuous spiral. `
+    :`A negative ratio adds a point reflection to each step; in 2D that is a half-turn, so the spiral turns the other way and the tiling is the mirror image of the one for |r|. `;
+  const st=$('e2_status'), pill=$('e2_pill'), noun=D===3?'box':'rectangle';
+  const SQ={'2-1':'Removing a φ × φ square from the φ × φ² rectangle leaves a smaller copy of it.',
+            '3-1':'Removing a ρ × ρ × ρ² square prism from the ρ × ρ² × ρ³ box leaves a smaller copy of it.',
+            '3-2':'Removing a ψ × ψ² × ψ² square prism from the ψ × ψ² × ψ³ box leaves a smaller copy of it.'};
+  if(match===0){
+    st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':near.name+'.'}</b> ${note}${note?'Its proportions are those of the '+near.name.toLowerCase()+'. ':''}When cut in half, it forms two identical, scaled-down copies of itself. This remains true no matter how many times it is bisected.`;
+  }else if(match>=1){
+    st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':near.name+'.'}</b> ${note}${note?'Its proportions are those of the '+near.name.toLowerCase()+'. ':''}${SQ[D+'-'+match]} This remains true no matter how many times it is repeated.`;
+  }else{
+    st.innerHTML=`<b>r = ${fmtR(x)}.</b> ${note}Removing the gnomon leaves a smaller copy of the original ${noun}, but the gnomon has no square faces. Nearest special value: ${near.name}, r = ${f4(near.x)}.`;
+  }
+  st.classList.toggle('on',match>=0);
+  pill.textContent=match>=0&&!note?`${near.name} · ${near.eq}`:`r = ${fmtR(x)}`;
+  pill.classList.toggle('on',match>=0);
+  $('e2_chips').querySelectorAll('.chip').forEach(b=>b.classList.toggle('active',Math.abs(+b.dataset.x-x)<1e-6));
+}
+function setX(v){if(Number.isNaN(v))return;
+  if(!state.anyR){   // default mode: r ≥ 1 only; a ratio below 1 becomes its reciprocal (same shape), 0 becomes ∞
+    if(isFinite(v)){const a=Math.abs(v);v=a<1e-5?Infinity:a<1?1/a:a;}else v=Infinity;
+  }
+  if(isFinite(v)){const a=Math.abs(v);v=a<1e-5?0:Math.sign(v)*Math.min(XMAX,Math.max(1/XMAX,a));if(a>=1/XDEG&&a<=XDEG)v=Math.sign(v)||1;}
+  state.x=v;build();}
+$('e2_x').addEventListener('input',e=>setX(fromPos(+e.target.value)));
+$('e2_xnum').addEventListener('change',e=>{const t=e.target.value.trim().replace(/^[−–]/,'-');
+  setX(/^\+?(∞|inf)/i.test(t)?Infinity:/^-(∞|inf)/i.test(t)?-Infinity:parseFloat(t));
+  e.target.value=fmtR(state.x);});   // show the value actually used
+$('e2_anyR').addEventListener('change',e=>{state.anyR=e.target.checked;renderControls();setX(state.x);});   // show the value actually used
+$('e2_explode').addEventListener('input',e=>{state.explode=+e.target.value;$('e2_exOut').textContent=state.explode.toFixed(2);build();});
+$('e2_dive').addEventListener('change',e=>state.dive=e.target.checked);
+$('e2_xray').addEventListener('change',e=>state.xray=e.target.checked);
+$('e2_turn').addEventListener('change',e=>state.turn=e.target.checked);
+$('e2_spOn').addEventListener('change',e=>{state.spiral=e.target.checked;renderControls();build();});
+$('e2_spNext').addEventListener('click',()=>{if(G&&G.all.length){state.spIdx=(state.spIdx+1)%G.all.length;build();}});
+function setD(D){if(state.D===D)return;state.D=D;const sp=specials(D);state.x=sp[sp.length-1].x;cam.dist=D===3?17:15;renderControls();build();}
+
+
+(function(){const PISOT={'2-1':1,'3-1':1,'3-2':1,'4-3':1,'5-4':1};const TN={'4-3':'θ₂','5-4':'Plastic (again)'};
+  let h='';for(let D=2;D<=5;D++){for(let k=0;k<D;k++){const r=root(D,k),key=D+'-'+k,nm=NAMES[key]||TN[key]||'';
+  h+=`<tr><td class="n">${k===0?D:''}</td><td class="n">${k}</td><td class="n">${eqText(D,k)}</td><td class="n">${r.toFixed(5)}</td><td>${PISOT[key]?'yes':'—'}</td><td class="nm">${nm}</td></tr>`;}}
+  {const el=$('e2_tbl');if(el)el.innerHTML=h;}})();
+
+/* ---------- camera ---------- */
+const cam={theta:-0.75,phi:1.05,dist:state.D===3?17:15,target:new THREE.Vector3(),pan:new THREE.Vector3()};
+// 2D: zoom about a screen point, keeping the world point under it fixed
+function zoomAt(cx,cy,d0,d1){const rc=canvas.getBoundingClientRect(),th=Math.tan(camera.fov*Math.PI/360),f=1-d1/d0;
+  const nx=(cx-rc.left)/rc.width*2-1, ny=1-(cy-rc.top)/rc.height*2;cam.pan.x+=nx*d0*th*camera.aspect*f;cam.pan.y+=ny*d0*th*f;}
+let lastInteract=0;const ptrs=new Map();let pinch0=0;
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
+canvas.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const pr=ptrs.get(e.pointerId);
+  const dx=e.clientX-pr.x, dy=e.clientY-pr.y;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===1&&state.D===3){cam.theta-=dx*0.008;cam.phi=Math.min(Math.PI-0.12,Math.max(0.12,cam.phi-dy*0.008));}
+  else if(ptrs.size===1){const w=2*cam.dist*Math.tan(camera.fov*Math.PI/360)/canvas.clientHeight;cam.pan.x-=dx*w;cam.pan.y+=dy*w;}
+  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(pinch0>0&&d>0){const d0=cam.dist,d1=Math.min(60,Math.max(2,d0*pinch0/d));if(state.D===2)zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d0,d1);cam.dist=d1;}pinch0=d;}});
+const up=e=>{ptrs.delete(e.pointerId);pinch0=0;};
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
+canvas.addEventListener('wheel',e=>{e.preventDefault();const d0=cam.dist,d1=Math.min(60,Math.max(2,d0*Math.exp(e.deltaY*0.001)));
+  if(state.D===2)zoomAt(e.clientX,e.clientY,d0,d1);cam.dist=d1;lastInteract=performance.now();},{passive:false});
+canvas.addEventListener('dblclick',()=>{cam.pan.set(0,0,0);cam.dist=state.D===3?17:15;});
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(canvas);resize();
+
+/* ---------- frame loop ---------- */
+let tDive=0,last=performance.now();
+const FLIP=new THREE.Matrix4().makeRotationX(Math.PI), IDENT=new THREE.Matrix4();
+const mT=new THREE.Matrix4(),mS=new THREE.Matrix4(),mR=new THREE.Matrix4(),mTi=new THREE.Matrix4(),goal=new THREE.Vector3(),origin=new THREE.Vector3(),tmpC=new THREE.Color();
+function tick(now){
+  if(!ACT['e2_']){last=now;requestAnimationFrame(tick);return;}
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(state.dive&&!G.deg&&!G.improper){tDive+=dt*Math.min(2.2,0.35/Math.log(G.r));if(tDive>=1)tDive-=Math.floor(tDive);}
+  else if(tDive>0){const tg=tDive>0.5?1:0;tDive+=(tg-tDive)*0.15;if(Math.abs(tg-tDive)<0.002)tDive=0;}
+  if(state.turn&&state.D===3&&now-lastInteract>2500)cam.theta+=dt*0.16;
+  const flip=state.D===3?FLIP:IDENT;   // 3D: turn the model over so the limit corner is on top
+  goal.copy(state.dive?Pv:origin).applyMatrix4(flip);
+  if(state.D===2){goal.add(cam.pan);if(!state.dive)cam.target.copy(goal);else cam.target.lerp(goal,0.08);}else cam.target.lerp(goal,0.08);
+  if(state.D===3){const sp=Math.sin(cam.phi);camera.position.set(cam.target.x+cam.dist*sp*Math.sin(cam.theta),cam.target.y+cam.dist*Math.cos(cam.phi),cam.target.z+cam.dist*sp*Math.cos(cam.theta));}
+  else camera.position.set(cam.target.x,cam.target.y,cam.target.z+cam.dist);
+  camera.up.set(0,1,0);camera.lookAt(cam.target);
+
+  // zoom loop: the scene transform runs from the identity (t = 0) to T⁻¹ (t = 1), which looks identical to t = 0
+  const sc=Math.pow(G.r,tDive);
+  mT.makeTranslation(Pv.x,Pv.y,Pv.z);mS.makeScale(sc,sc,sc);mR.makeRotationAxis(Ax,-G.theta*tDive);mTi.makeTranslation(-Pv.x,-Pv.y,-Pv.z);
+  group.matrix.copy(flip).multiply(mT).multiply(mS).multiply(mR).multiply(mTi);group.matrixWorldNeedsUpdate=true;
+
+  const fpx=canvas.clientHeight/(2*Math.tan(camera.fov*Math.PI/360));
+  const dist=camera.position.distanceTo(cam.target);
+  const pxAt=v=>G.s0*Math.pow(G.r,-v)/dist*fpx;   // on-screen size of the piece at visual depth v
+  const period=2*G.D;
+  for(let i=0;i<(G.deg?0:G.N);i++){
+    const it=items[i], v=i-tDive, alpha=v<0?Math.max(0,1+v):1, px=pxAt(v);
+    // visibility follows the piece's longest edge, so long thin pieces (large r) stay visible;
+    // near r = 1, where many slices crowd together, detail fades with the slices' thickness instead
+    const pxL=px*Math.pow(G.r,G.D-1), fade=G.r<3?px*G.thin:pxL;
+    if(pxL<0.5||alpha<=0.001){it.mesh.visible=false;continue;}
+    it.mesh.visible=true;
+    const w=0.5-0.5*Math.cos(2*Math.PI*v/period);
+    it.mb.color.copy(col.fa).lerp(col.fb,w*0.85*Math.min(1,fade/3));   // pieces thinner than ~3px get uniform shading
+    if(state.xray){
+      it.mb.transparent=true;it.mb.opacity=0.07*alpha;it.mb.depthWrite=false;
+      it.ms.transparent=true;it.ms.opacity=0.45*alpha;it.ms.depthWrite=false;
+    }else{
+      const tr=alpha<0.999;
+      it.mb.transparent=tr;it.mb.opacity=alpha;it.mb.depthWrite=!tr;
+      it.ms.transparent=tr;it.ms.opacity=alpha;it.ms.depthWrite=!tr;
+    }
+    it.lm.opacity=(state.xray?0.8:0.55)*alpha*Math.min(1,Math.max(0,(fade-3)/8));
+  }
+  { // undivided core (r = 1, or the remainder once the piece limit is reached)
+    const c=coreItem, px=c.size*Math.pow(G.r,tDive)/dist*fpx*(G.deg?1:Math.pow(G.r,G.D-1));   // longest edge
+    c.mesh.visible=px>=0.5&&!G.line;
+    limitLine.visible=!!G.line;
+    if(c.mesh.visible){
+      c.mb.color.copy(col.fa).lerp(col.fb,0.85*(0.5-0.5*Math.cos(2*Math.PI*(c.k-tDive)/period)));
+      c.mb.transparent=state.xray;c.mb.opacity=state.xray?0.07:1;c.mb.depthWrite=!state.xray;
+      c.lm.opacity=(state.xray?0.8:0.55)*Math.min(1,Math.max(0,(px-1.5)/8));
+    }
+  }
+  spirals.forEach(sp=>{
+    if(!sp.on)return;
+    for(let j=0;j<sp.n;j++){const v=sp.ts[j]-tDive;
+      const f=Math.min(1,Math.max(0,v+1))*Math.min(1,Math.max(0,(pxAt(v)-2)/10));
+      tmpC.copy(col.bg).lerp(col.acc,f);sp.cc[j*3]=tmpC.r;sp.cc[j*3+1]=tmpC.g;sp.cc[j*3+2]=tmpC.b;}
+    sp.g.attributes.color.needsUpdate=true;
+    let a=0;while(a<sp.dn&&sp.dts[a]-tDive<-0.5)a++;
+    let b=a;while(b<sp.dn&&pxAt(sp.dts[b]-tDive)>=6)b++;
+    sp.dg.setDrawRange(a,Math.max(0,b-a));
+  });
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+renderControls();build();requestAnimationFrame(tick);
+})();
+
+
+
+(function(){
+if(typeof THREE==='undefined')return;
+const $=id=>document.getElementById(id);
+const POOL=220, XMIN=1, XMAX=1e5, XDEG=1.00025;   // largest finite r; below XDEG the box is drawn as an undivided cube
+// slider position p in [0, 1] maps to r = 1/(1 − p): p = ½ → 2, ¾ → 4, ⅞ → 8, …, p = 1 → ∞
+// default slider: p in [0, 1] → r = 1/(1 − p): ½ → 2, ¾ → 4, ⅞ → 8, …, 1 → ∞.
+// any-real-r slider: u = 4p − 2 in [−2, 2]; |u| ≤ 1 is r = u, |u| in [1, 2] is r = ±1/(2 − |u|); r and 1/r give the same shape
+const uOf=r=>r===Infinity?2:r===-Infinity?-2:Math.abs(r)<=1?r:Math.sign(r)*(2-1/Math.abs(r));
+const rOf=u=>u>=2?Infinity:u<=-2?-Infinity:Math.abs(u)<=1?u:Math.sign(u)/(2-Math.abs(u));
+const toPos=r=>state.anyR?(uOf(r)+2)/4:(r===Infinity?1:1-1/r);
+const fromPos=p=>state.anyR?rOf(p*4-2):(p>=1?Infinity:1/(1-p));
+const fmtR=v=>v===Infinity?'∞':v===-Infinity?'−∞':(v<0?'−':'')+Math.abs(v).toFixed(4);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NAMES={'2-0':'√2 rectangle','2-1':'Golden rectangle','3-0':'Delian brick','3-1':'Plastic cuboid','3-2':'Supergolden cuboid'};
+const TICK={'2-0':'√2','2-1':'φ','3-0':'∛2','3-1':'ρ','3-2':'ψ'};
+const SUP=['⁰','¹','²','³','⁴','⁵','⁶'];
+const LET='abcdefgh';
+const eqText=(D,k)=>k===0?`r${SUP[D]} = 2`:k===1?`r${SUP[D]} = r + 1`:`r${SUP[D]} = r${SUP[k]} + 1`;
+const f4=v=>v.toFixed(4);
+const state={D:3,x:root(3,2),explode:0,xray:false,dive:false,spiral:true,spIdx:0,turn:!reduce,anyR:false};
+$('e3_turn').checked=state.turn;
+
+/* ---------- scene ---------- */
+const canvas=$('e3_view');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(30,1,0.02,600);
+scene.add(new THREE.AmbientLight(0xffffff,0.62));
+const sun=new THREE.DirectionalLight(0xffffff,0.55);sun.position.set(-4,9,6);scene.add(sun);
+const fillL=new THREE.DirectionalLight(0xffffff,0.2);fillL.position.set(6,-3,-5);scene.add(fillL);
+const group=new THREE.Group();group.matrixAutoUpdate=false;scene.add(group);
+const unit=new THREE.BoxGeometry(1,1,1), unitE=new THREE.EdgesGeometry(unit);
+const col={fa:new THREE.Color(),fb:new THREE.Color(),ink:new THREE.Color(),acc:new THREE.Color(),sq:new THREE.Color(),bg:new THREE.Color()};
+const items=[];
+for(let i=0;i<POOL;i++){
+  const mb=new THREE.MeshLambertMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+  const ms=mb.clone();
+  const base=[mb,mb,mb,mb,mb,mb];
+  const byAxis=[0,1,2].map(A=>base.map((m,j)=>(j>>1)===A?ms:mb));
+  const mesh=new THREE.Mesh(unit,base);
+  const lm=new THREE.LineBasicMaterial({transparent:true});
+  mesh.add(new THREE.LineSegments(unitE,lm));
+  mesh.visible=false;group.add(mesh);
+  items.push({mesh,mb,ms,base,byAxis,lm});
+}
+const limitMat=new THREE.LineBasicMaterial();
+const limitLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3,0,0),new THREE.Vector3(3,0,0)]),limitMat);
+limitLine.visible=false;group.add(limitLine);
+const coreItem=(()=>{const mb=new THREE.MeshLambertMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+  const mesh=new THREE.Mesh(unit,mb), lm=new THREE.LineBasicMaterial({transparent:true});mesh.add(new THREE.LineSegments(unitE,lm));
+  mesh.visible=false;group.add(mesh);return {mesh,mb,lm,size:0,k:0};})();
+// spirals: up to 8 curves, each a line plus dots at the vertices it passes through
+const SPN=4000, SPC=8, DOTN=300;
+const dotTex=(()=>{const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');g.beginPath();g.arc(16,16,12,0,Math.PI*2);g.fillStyle='#fff';g.fill();return new THREE.CanvasTexture(c);})();
+const spLineMat=new THREE.LineBasicMaterial({vertexColors:true,depthTest:false,transparent:true});
+const dotMat=new THREE.PointsMaterial({size:6,sizeAttenuation:false,map:dotTex,transparent:true,alphaTest:0.5,depthTest:false});
+const spirals=[];
+for(let i=0;i<SPC;i++){
+  const pos=new Float32Array(SPN*3), cc=new Float32Array(SPN*3), ts=new Float32Array(SPN);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(cc,3));
+  const line=new THREE.Line(g,spLineMat);line.renderOrder=10;line.frustumCulled=false;group.add(line);
+  const dpos=new Float32Array(DOTN*3), dts=new Float32Array(DOTN);
+  const dg=new THREE.BufferGeometry();dg.setAttribute('position',new THREE.BufferAttribute(dpos,3));
+  const pts=new THREE.Points(dg,dotMat);pts.renderOrder=11;pts.frustumCulled=false;group.add(pts);
+  spirals.push({pos,cc,ts,g,line,n:0,dpos,dts,dg,pts,dn:0,on:false});
+}
+
+function readTheme(){
+  const cs=getComputedStyle(document.querySelector('.ssr')||document.documentElement), g=n=>cs.getPropertyValue(n).trim();
+  col.fa.set(g('--fill-a'));col.fb.set(g('--fill-b'));col.ink.set(g('--ink'));
+  col.acc.set(g('--accent'));col.sq.set(g('--sq'));col.bg.set(g('--sheet'));
+  renderer.setClearColor(col.bg,1);
+  items.forEach(it=>{it.lm.color.copy(col.ink);it.ms.color.copy(col.sq);});
+  if(typeof coreItem!=='undefined')coreItem.lm.color.copy(col.ink);
+  if(typeof limitMat!=='undefined')limitMat.color.copy(col.ink);
+  dotMat.color.copy(col.acc);
+}
+readTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readTheme);
+new MutationObserver(readTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------- build ---------- */
+let G=null, Pv=new THREE.Vector3(), Ax=new THREE.Vector3();
+function build(){
+  const ax=Math.abs(state.x), line=!isFinite(state.x)||state.x===0, deg=!line&&ax<XDEG&&ax>1/XDEG;
+  G=modelSigned(state.D,line?50:deg?XDEG:state.x,state.explode,POOL);G.deg=deg;G.line=line;
+  Pv.set(...G.p);Ax.set(...G.axis);
+  const e=G.e, p=G.p;
+  // core: the undivided remainder (or the whole cube at r = 1)
+  // at r = 1 the whole figure is one exact square or cube, side 6
+  // at r = ∞ every edge but the longest is negligible in proportion: the box is drawn as a line along its longest axis
+  const w=0.012, cb=line?{lo:[-3,-w,state.D===3?-w:0],hi:[3,w,state.D===3?w:0]}:deg?{lo:[-3,-3,state.D===3?-3:0],hi:[3,3,state.D===3?3:0]}:G.core, cc=[0,1,2].map(a=>(cb.lo[a]+cb.hi[a])/2), ce=(deg||line)?0:e;
+  G.thin=Math.min(1,Math.pow(G.r,G.D-1)-1/G.r);   // gnomon thickness relative to its shortest other edge
+  coreItem.mesh.position.set(cc[0]+ce*(cc[0]-p[0]),cc[1]+ce*(cc[1]-p[1]),cc[2]+ce*(cc[2]-p[2]));
+  coreItem.mesh.scale.set(...[0,1,2].map(a=>Math.max(cb.hi[a]-cb.lo[a],1e-3)));
+  coreItem.size=line?6:deg?G.s0:G.core.s;coreItem.k=(deg||line)?0:G.N;G.deg=deg||line;
+  items.forEach((it,i)=>{
+    if(i>=G.N||deg||line){it.mesh.visible=false;return;}
+    const pc=G.pieces[i], c=pc.c;
+    it.mesh.position.set(c[0]+e*(c[0]-p[0]),c[1]+e*(c[1]-p[1]),c[2]+e*(c[2]-p[2]));
+    it.mesh.scale.set(Math.max(pc.hi[0]-pc.lo[0],1e-3),Math.max(pc.hi[1]-pc.lo[1],1e-3),Math.max(pc.hi[2]-pc.lo[2],1e-3));
+    it.mesh.material=pc.sqA>=0?it.byAxis[pc.sqA]:it.base;
+  });
+  // fixed order: spiral 1 is the one that stays most inside the shape from r ≈ 1.24 upward (every special value);
+  // keeping the order fixed means each numbered spiral is the same spiral at every r, so nothing jumps
+  const ORDER={2:[1,0],3:[3,2,0,1]};
+  if(!G.neg&&G.all.length===(G.D===3?4:2))G.all=ORDER[G.D].map(i=>G.all[i]);
+  // when there are no spirals (r = ±1, 0, ±∞, or a 3D rotoreflection) keep the chosen number untouched
+  const nAll=G.all.length;if(!Number.isInteger(state.spIdx)||state.spIdx<0)state.spIdx=0;
+  const idx=nAll?state.spIdx%nAll:0;if(nAll)state.spIdx=idx;
+  const curves=state.spiral&&nAll&&!deg&&!line&&!G.improper?[G.all[idx]]:[];
+  $('e3_spLbl').textContent=G.improper?'(none: each step is a rotoreflection)':nAll?`(${idx+1} of ${nAll})`:'';
+  $('e3_spNext').disabled=!state.spiral||!!G.improper;
+  const Ns=Math.min(G.N,Math.ceil(Math.log(800)/Math.log(G.r))+3);
+  const per=Math.max(6,Math.min(36,Math.floor((SPN-1)/(Ns+1))));
+  spirals.forEach((sp,ci)=>{
+    sp.on=ci<curves.length;sp.line.visible=sp.on;sp.pts.visible=sp.on;
+    if(!sp.on)return;
+    const q=curves[ci];let n=0;
+    for(let j=0;j<=(Ns-1)*per&&n<SPN;j++){const t=j/per, v=G.curve(q,t);   // start at the shape's outer vertex, so the spiral stays within it
+      sp.pos[n*3]=v[0];sp.pos[n*3+1]=v[1];sp.pos[n*3+2]=v[2];sp.ts[n]=t;n++;}
+    sp.n=n;sp.g.setDrawRange(0,n);sp.g.attributes.position.needsUpdate=true;
+    let dn=0;
+    for(let k=0;k<=Ns-1&&dn<DOTN;k++){const v=G.curve(q,k);sp.dpos[dn*3]=v[0];sp.dpos[dn*3+1]=v[1];sp.dpos[dn*3+2]=v[2];sp.dts[dn]=k;dn++;}
+    sp.dn=dn;sp.dg.attributes.position.needsUpdate=true;
+  });
+  updateReadouts(curves.length);
+}
+
+/* ---------- UI ---------- */
+const specials=D=>Array.from({length:D},(_,k)=>{const r=root(D,k);return {k,r,x:r,name:NAMES[D+'-'+k],tick:TICK[D+'-'+k],eq:eqText(D,k)};});
+function renderControls(){
+  const sp=specials(state.D);
+  const scale=state.anyR?[[-Infinity,'−∞'],[-2,'−2'],[-1,'−1'],[0,'0'],[1,'1'],[2,'2'],[Infinity,'∞']]:[[1,'1'],[2,'2'],[4,'4'],[8,'8'],[16,'16'],[Infinity,'∞']];
+  $('e3_ticks').innerHTML=scale.map(([v,l])=>`<span class="tick sc" style="left:calc(9px + ${toPos(v)} * (100% - 18px));top:0">${l}</span>`).join('')
+    +sp.map((s,i)=>`<span class="tick" style="left:calc(9px + ${toPos(s.x)} * (100% - 18px));top:${i%2?16:0}px">${s.tick}</span>`).join('');
+  const extra=state.D===3?[{name:'√2 cuboid',x:Math.SQRT2}]:[];
+  const negs=state.anyR?sp.map(q=>({name:'−'+q.tick,x:-q.x})).concat([{name:'1/'+sp[sp.length-1].tick,x:1/sp[sp.length-1].x},{name:'0',x:0}]):[];
+  $('e3_chips').innerHTML=sp.concat(extra).concat(negs).map(s=>`<button class="chip" data-x="${s.x}">${s.name}<span>r = ${f4(s.x)}</span></button>`).join('');
+  $('e3_chips').querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>setX(+b.dataset.x)));
+  $('e3_turnwrap').hidden=state.D!==3;$('e3_turn').disabled=state.D!==3;$('e3_boxLbl').textContent=state.D===3?'Nested boxes':'Nested rectangles';
+  $('e3_hint').textContent=state.D===3?'Drag to orbit · scroll or pinch to zoom':'Scroll to zoom at the cursor · drag to pan · double-click to reset';
+  $('e3_spOn').checked=state.spiral;$('e3_anyR').checked=state.anyR;
+}
+function updateReadouts(nc){
+  const {D,match}=G, x=state.x, r=G.deg?1:G.r;
+  $('e3_x').value=toPos(x);if(document.activeElement!==$('e3_xnum'))$('e3_xnum').value=fmtR(x);
+  if(G.line){
+    $('e3_serOut').textContent=x===0?'1, 0, 0, …':'1, 0, 0, … (in the limit)';
+    $('e3_boxOut').innerHTML=`<span class="tup">${D===3?'0 : 0 : 1':'0 : 1'} in proportion</span>`;
+    $('e3_cubOut').textContent='none';$('e3_nOut').textContent='limit';
+    $('e3_status').innerHTML=x===0
+      ?`<b>r = 0.</b> Every term after the first is 0, so in proportion every edge except one has length 0 and the ${D===3?'box':'rectangle'} is a line: the same limit as r = ±∞, since r and 1/r give the same shape.`
+      :`<b>r = ${fmtR(x)}.</b> Each edge is infinitely longer than the one before, so in proportion every edge except the longest shrinks to nothing and the ${D===3?'box':'rectangle'} collapses to a line.`;
+    $('e3_status').classList.remove('on');$('e3_pill').textContent='r = '+fmtR(x);$('e3_pill').classList.remove('on');
+    $('e3_chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+    return;
+  }
+  if(G.deg){
+    $('e3_serOut').textContent='1, 1, 1, 1, …';$('e3_boxOut').innerHTML=D===3?'<span class="tup">(1, 1, 1)</span><span class="tup">…</span>':'<span class="tup">(1, 1)</span><span class="tup">…</span>';
+    $('e3_cubOut').textContent='none';$('e3_slabOut').textContent='none';$('e3_nOut').textContent='1 piece';
+    $('e3_status').innerHTML=`<b>r = ${x<0?'−1':'1'}.</b> Every edge has length |r|ⁿ = 1, so the ${D===3?'box is a cube':'rectangle is a square'} and does not subdivide.`;
+    $('e3_status').classList.remove('on');$('e3_pill').textContent='r = '+(x<0?'−1':'1');$('e3_pill').classList.remove('on');
+    $('e3_chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+    return;
+  }
+  // outer box (r, …, r^D); each nested box is the previous one scaled by 1/r;
+  // first gnomon (r, …, r^(D−1), r^D − 1), each later one scaled by 1/r
+  const sup=n=>String(n).replace(/-/g,'⁻').replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  const fmt=v=>{if(v>=1e-3&&v<1e5)return (+v.toPrecision(3)).toString();const [m,e]=v.toExponential(2).split('e');return (+m)+'\u00a0×\u00a010'+sup(+e);};
+  const tup=a=>'<span class="tup">('+a.slice().sort((p,q)=>p-q).map(fmt).join(', ')+')</span>';
+  const win=n=>Array.from({length:D},(_,i)=>Math.pow(r,i+1-n));
+  const gno=n=>Array.from({length:D-1},(_,i)=>Math.pow(r,i+1-n)).concat([Math.pow(r,-n)*(Math.pow(r,D)-1)]);
+  const f=Math.abs(x)<1?x:1/x, sgn=v=>(v<0?'−':'')+fmt(Math.abs(v));   // signed factor per step; a negative factor includes a point reflection
+  $('e3_serOut').textContent=Array.from({length:5},(_,n)=>sgn(Math.pow(f,n))).join(', ')+', …';
+  $('e3_boxOut').innerHTML=[0,1,2].map(n=>tup(win(n))).join('')+'<span class="tup">…</span>';
+  $('e3_cubOut').innerHTML=[0,1,2].map(n=>tup(gno(n))).join('')+'<span class="tup">…</span>';
+  $('e3_slabOut').textContent=D===3?'r, r², r³ − 1':'r, r² − 1';
+  $('e3_nOut').textContent=`${G.N} pieces`;
+  const sp=specials(D);
+  let near=sp[0];sp.forEach(s=>{if(Math.abs(s.x-r)<Math.abs(near.x-r))near=s;});
+  let note='';
+  if(G.recip)note+=`Because |r| &lt; 1, the sequence shrinks instead of growing: the shape is the same as for |r| = ${f4(r)} (that is, 1/|r|), read from the other end. `;
+  if(G.neg)note+=D===3
+    ?`A negative ratio adds a point reflection to each step. In 3D that reverses orientation, so each step is a rotoreflection: the pieces alternate sides and there is no continuous spiral. `
+    :`A negative ratio adds a point reflection to each step; in 2D that is a half-turn, so the spiral turns the other way and the tiling is the mirror image of the one for |r|. `;
+  const st=$('e3_status'), pill=$('e3_pill'), noun=D===3?'box':'rectangle';
+  const SQ={'2-1':'Removing a φ × φ square from the φ × φ² rectangle leaves a smaller copy of it.',
+            '3-1':'Removing a ρ × ρ × ρ² square prism from the ρ × ρ² × ρ³ box leaves a smaller copy of it.',
+            '3-2':'Removing a ψ × ψ² × ψ² square prism from the ψ × ψ² × ψ³ box leaves a smaller copy of it.'};
+  if(match===0){
+    st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':near.name+'.'}</b> ${note}${note?'Its proportions are those of the '+near.name.toLowerCase()+'. ':''}When cut in half, it forms two identical, scaled-down copies of itself. This remains true no matter how many times it is bisected.`;
+  }else if(match>=1){
+    st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':near.name+'.'}</b> ${note}${note?'Its proportions are those of the '+near.name.toLowerCase()+'. ':''}${SQ[D+'-'+match]} This remains true no matter how many times it is repeated.`;
+  }else{
+    st.innerHTML=`<b>r = ${fmtR(x)}.</b> ${note}Removing the gnomon leaves a smaller copy of the original ${noun}, but the gnomon has no square faces. Nearest special value: ${near.name}, r = ${f4(near.x)}.`;
+  }
+  st.classList.toggle('on',match>=0);
+  pill.textContent=match>=0&&!note?`${near.name} · ${near.eq}`:`r = ${fmtR(x)}`;
+  pill.classList.toggle('on',match>=0);
+  $('e3_chips').querySelectorAll('.chip').forEach(b=>b.classList.toggle('active',Math.abs(+b.dataset.x-x)<1e-6));
+}
+function setX(v){if(Number.isNaN(v))return;
+  if(!state.anyR){   // default mode: r ≥ 1 only; a ratio below 1 becomes its reciprocal (same shape), 0 becomes ∞
+    if(isFinite(v)){const a=Math.abs(v);v=a<1e-5?Infinity:a<1?1/a:a;}else v=Infinity;
+  }
+  if(isFinite(v)){const a=Math.abs(v);v=a<1e-5?0:Math.sign(v)*Math.min(XMAX,Math.max(1/XMAX,a));if(a>=1/XDEG&&a<=XDEG)v=Math.sign(v)||1;}
+  state.x=v;build();}
+$('e3_x').addEventListener('input',e=>setX(fromPos(+e.target.value)));
+$('e3_xnum').addEventListener('change',e=>{const t=e.target.value.trim().replace(/^[−–]/,'-');
+  setX(/^\+?(∞|inf)/i.test(t)?Infinity:/^-(∞|inf)/i.test(t)?-Infinity:parseFloat(t));
+  e.target.value=fmtR(state.x);});   // show the value actually used
+$('e3_anyR').addEventListener('change',e=>{state.anyR=e.target.checked;renderControls();setX(state.x);});   // show the value actually used
+$('e3_explode').addEventListener('input',e=>{state.explode=+e.target.value;$('e3_exOut').textContent=state.explode.toFixed(2);build();});
+$('e3_dive').addEventListener('change',e=>state.dive=e.target.checked);
+$('e3_xray').addEventListener('change',e=>state.xray=e.target.checked);
+$('e3_turn').addEventListener('change',e=>state.turn=e.target.checked);
+$('e3_spOn').addEventListener('change',e=>{state.spiral=e.target.checked;renderControls();build();});
+$('e3_spNext').addEventListener('click',()=>{if(G&&G.all.length){state.spIdx=(state.spIdx+1)%G.all.length;build();}});
+function setD(D){if(state.D===D)return;state.D=D;const sp=specials(D);state.x=sp[sp.length-1].x;cam.dist=D===3?17:15;renderControls();build();}
+
+
+(function(){const PISOT={'2-1':1,'3-1':1,'3-2':1,'4-3':1,'5-4':1};const TN={'4-3':'θ₂','5-4':'Plastic (again)'};
+  let h='';for(let D=2;D<=5;D++){for(let k=0;k<D;k++){const r=root(D,k),key=D+'-'+k,nm=NAMES[key]||TN[key]||'';
+  h+=`<tr><td class="n">${k===0?D:''}</td><td class="n">${k}</td><td class="n">${eqText(D,k)}</td><td class="n">${r.toFixed(5)}</td><td>${PISOT[key]?'yes':'—'}</td><td class="nm">${nm}</td></tr>`;}}
+  {const el=$('e3_tbl');if(el)el.innerHTML=h;}})();
+
+/* ---------- camera ---------- */
+const cam={theta:-0.75,phi:1.05,dist:state.D===3?17:15,target:new THREE.Vector3(),pan:new THREE.Vector3()};
+// 2D: zoom about a screen point, keeping the world point under it fixed
+function zoomAt(cx,cy,d0,d1){const rc=canvas.getBoundingClientRect(),th=Math.tan(camera.fov*Math.PI/360),f=1-d1/d0;
+  const nx=(cx-rc.left)/rc.width*2-1, ny=1-(cy-rc.top)/rc.height*2;cam.pan.x+=nx*d0*th*camera.aspect*f;cam.pan.y+=ny*d0*th*f;}
+let lastInteract=0;const ptrs=new Map();let pinch0=0;
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
+canvas.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const pr=ptrs.get(e.pointerId);
+  const dx=e.clientX-pr.x, dy=e.clientY-pr.y;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===1&&state.D===3){cam.theta-=dx*0.008;cam.phi=Math.min(Math.PI-0.12,Math.max(0.12,cam.phi-dy*0.008));}
+  else if(ptrs.size===1){const w=2*cam.dist*Math.tan(camera.fov*Math.PI/360)/canvas.clientHeight;cam.pan.x-=dx*w;cam.pan.y+=dy*w;}
+  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(pinch0>0&&d>0){const d0=cam.dist,d1=Math.min(60,Math.max(2,d0*pinch0/d));if(state.D===2)zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d0,d1);cam.dist=d1;}pinch0=d;}});
+const up=e=>{ptrs.delete(e.pointerId);pinch0=0;};
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
+canvas.addEventListener('wheel',e=>{e.preventDefault();const d0=cam.dist,d1=Math.min(60,Math.max(2,d0*Math.exp(e.deltaY*0.001)));
+  if(state.D===2)zoomAt(e.clientX,e.clientY,d0,d1);cam.dist=d1;lastInteract=performance.now();},{passive:false});
+canvas.addEventListener('dblclick',()=>{cam.pan.set(0,0,0);cam.dist=state.D===3?17:15;});
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(canvas);resize();
+
+/* ---------- frame loop ---------- */
+let tDive=0,last=performance.now();
+const FLIP=new THREE.Matrix4().makeRotationX(Math.PI), IDENT=new THREE.Matrix4();
+const mT=new THREE.Matrix4(),mS=new THREE.Matrix4(),mR=new THREE.Matrix4(),mTi=new THREE.Matrix4(),goal=new THREE.Vector3(),origin=new THREE.Vector3(),tmpC=new THREE.Color();
+function tick(now){
+  if(!ACT['e3_']){last=now;requestAnimationFrame(tick);return;}
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(state.dive&&!G.deg&&!G.improper){tDive+=dt*Math.min(2.2,0.35/Math.log(G.r));if(tDive>=1)tDive-=Math.floor(tDive);}
+  else if(tDive>0){const tg=tDive>0.5?1:0;tDive+=(tg-tDive)*0.15;if(Math.abs(tg-tDive)<0.002)tDive=0;}
+  if(state.turn&&state.D===3&&now-lastInteract>2500)cam.theta+=dt*0.16;
+  const flip=state.D===3?FLIP:IDENT;   // 3D: turn the model over so the limit corner is on top
+  goal.copy(state.dive?Pv:origin).applyMatrix4(flip);
+  if(state.D===2){goal.add(cam.pan);if(!state.dive)cam.target.copy(goal);else cam.target.lerp(goal,0.08);}else cam.target.lerp(goal,0.08);
+  if(state.D===3){const sp=Math.sin(cam.phi);camera.position.set(cam.target.x+cam.dist*sp*Math.sin(cam.theta),cam.target.y+cam.dist*Math.cos(cam.phi),cam.target.z+cam.dist*sp*Math.cos(cam.theta));}
+  else camera.position.set(cam.target.x,cam.target.y,cam.target.z+cam.dist);
+  camera.up.set(0,1,0);camera.lookAt(cam.target);
+
+  // zoom loop: the scene transform runs from the identity (t = 0) to T⁻¹ (t = 1), which looks identical to t = 0
+  const sc=Math.pow(G.r,tDive);
+  mT.makeTranslation(Pv.x,Pv.y,Pv.z);mS.makeScale(sc,sc,sc);mR.makeRotationAxis(Ax,-G.theta*tDive);mTi.makeTranslation(-Pv.x,-Pv.y,-Pv.z);
+  group.matrix.copy(flip).multiply(mT).multiply(mS).multiply(mR).multiply(mTi);group.matrixWorldNeedsUpdate=true;
+
+  const fpx=canvas.clientHeight/(2*Math.tan(camera.fov*Math.PI/360));
+  const dist=camera.position.distanceTo(cam.target);
+  const pxAt=v=>G.s0*Math.pow(G.r,-v)/dist*fpx;   // on-screen size of the piece at visual depth v
+  const period=2*G.D;
+  for(let i=0;i<(G.deg?0:G.N);i++){
+    const it=items[i], v=i-tDive, alpha=v<0?Math.max(0,1+v):1, px=pxAt(v);
+    // visibility follows the piece's longest edge, so long thin pieces (large r) stay visible;
+    // near r = 1, where many slices crowd together, detail fades with the slices' thickness instead
+    const pxL=px*Math.pow(G.r,G.D-1), fade=G.r<3?px*G.thin:pxL;
+    if(pxL<0.5||alpha<=0.001){it.mesh.visible=false;continue;}
+    it.mesh.visible=true;
+    const w=0.5-0.5*Math.cos(2*Math.PI*v/period);
+    it.mb.color.copy(col.fa).lerp(col.fb,w*0.85*Math.min(1,fade/3));   // pieces thinner than ~3px get uniform shading
+    if(state.xray){
+      it.mb.transparent=true;it.mb.opacity=0.07*alpha;it.mb.depthWrite=false;
+      it.ms.transparent=true;it.ms.opacity=0.45*alpha;it.ms.depthWrite=false;
+    }else{
+      const tr=alpha<0.999;
+      it.mb.transparent=tr;it.mb.opacity=alpha;it.mb.depthWrite=!tr;
+      it.ms.transparent=tr;it.ms.opacity=alpha;it.ms.depthWrite=!tr;
+    }
+    it.lm.opacity=(state.xray?0.8:0.55)*alpha*Math.min(1,Math.max(0,(fade-3)/8));
+  }
+  { // undivided core (r = 1, or the remainder once the piece limit is reached)
+    const c=coreItem, px=c.size*Math.pow(G.r,tDive)/dist*fpx*(G.deg?1:Math.pow(G.r,G.D-1));   // longest edge
+    c.mesh.visible=px>=0.5&&!G.line;
+    limitLine.visible=!!G.line;
+    if(c.mesh.visible){
+      c.mb.color.copy(col.fa).lerp(col.fb,0.85*(0.5-0.5*Math.cos(2*Math.PI*(c.k-tDive)/period)));
+      c.mb.transparent=state.xray;c.mb.opacity=state.xray?0.07:1;c.mb.depthWrite=!state.xray;
+      c.lm.opacity=(state.xray?0.8:0.55)*Math.min(1,Math.max(0,(px-1.5)/8));
+    }
+  }
+  spirals.forEach(sp=>{
+    if(!sp.on)return;
+    for(let j=0;j<sp.n;j++){const v=sp.ts[j]-tDive;
+      const f=Math.min(1,Math.max(0,v+1))*Math.min(1,Math.max(0,(pxAt(v)-2)/10));
+      tmpC.copy(col.bg).lerp(col.acc,f);sp.cc[j*3]=tmpC.r;sp.cc[j*3+1]=tmpC.g;sp.cc[j*3+2]=tmpC.b;}
+    sp.g.attributes.color.needsUpdate=true;
+    let a=0;while(a<sp.dn&&sp.dts[a]-tDive<-0.5)a++;
+    let b=a;while(b<sp.dn&&pxAt(sp.dts[b]-tDive)>=6)b++;
+    sp.dg.setDrawRange(a,Math.max(0,b-a));
+  });
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+renderControls();build();requestAnimationFrame(tick);
+})();
+
+
+
+(function(){
+if(typeof THREE==='undefined')return;
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SIZE=6;
+const NOTES={
+  fib:S=>`<p class="note1">Each rectangle has sides <span class="m">aₙ × aₙ₊₁</span> from the Fibonacci numbers (<span class="m">aₙ₊₂ = aₙ₊₁ + aₙ</span>). Each step adds a square, <span class="m">aₙ₊₁ × aₙ₊₁</span>, because <span class="m">aₙ₊₂ − aₙ = aₙ₊₁</span>. The ratio of consecutive terms tends to φ, so the rectangles approach the golden rectangle. Because φ is a Pisot number (the other root of <span class="m">r² = r + 1</span> has absolute value 0.618), the gap between the integer sides and exact geometric growth shrinks by that factor each step.</p>`,
+  pad:S=>`<p class="note1">Each box has edges <span class="m">aₙ × aₙ₊₁ × aₙ₊₂</span> from the Padovan numbers (<span class="m">aₙ₊₃ = aₙ₊₁ + aₙ</span>). Each step lengthens the shortest edge, adding a piece <span class="m">aₙ₊₁ × aₙ₊₁ × aₙ₊₂</span> with a square face, because <span class="m">aₙ₊₃ − aₙ = aₙ₊₁</span>. The ratio of consecutive terms tends to ρ, so the boxes approach the plastic cuboid, <span class="m">1 : ρ : ρ²</span>. Because ρ is a Pisot number (the other two roots of <span class="m">r³ = r + 1</span> have absolute value 0.869), the gap to exact geometric growth shrinks by that factor each step.</p>`,
+  nar:S=>`<p class="note1">Each box has edges <span class="m">aₙ × aₙ₊₁ × aₙ₊₂</span> from the Narayana numbers (<span class="m">aₙ₊₃ = aₙ₊₂ + aₙ</span>). Each step lengthens the shortest edge, adding a piece <span class="m">aₙ₊₁ × aₙ₊₂ × aₙ₊₂</span> with a square face, because <span class="m">aₙ₊₃ − aₙ = aₙ₊₂</span>. The ratio of consecutive terms tends to ψ, so the boxes approach the supergolden cuboid, <span class="m">1 : ψ : ψ²</span>. Because ψ is a Pisot number (the other two roots of <span class="m">r³ = r² + 1</span> have absolute value 0.826), the gap to exact geometric growth shrinks by that factor each step.</p>`
+};
+
+/* ---------- scene ---------- */
+const canvas=$('gfib_view');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(30,1,0.02,600);
+scene.add(new THREE.AmbientLight(0xffffff,0.62));
+const sun=new THREE.DirectionalLight(0xffffff,0.55);sun.position.set(-4,9,6);scene.add(sun);
+const fillL=new THREE.DirectionalLight(0xffffff,0.2);fillL.position.set(6,-3,-5);scene.add(fillL);
+const group=new THREE.Group();group.matrixAutoUpdate=false;scene.add(group);
+const unit=new THREE.BoxGeometry(1,1,1), unitE=new THREE.EdgesGeometry(unit);
+const col={fa:new THREE.Color(),fb:new THREE.Color(),ink:new THREE.Color(),sq:new THREE.Color(),warm:new THREE.Color(),bg:new THREE.Color()};
+const ghostMat=new THREE.LineBasicMaterial({transparent:true,opacity:0.95,depthTest:false});
+const ghost=new THREE.LineSegments(unitE,ghostMat);ghost.renderOrder=5;scene.add(ghost);
+
+let M=null, items=[], qs=[], ctrs=[], orient=new THREE.Matrix4(), t=0, playing=false, shown=-1, ratios=[], errs=[], K=1;
+
+function readTheme(){
+  const cs=getComputedStyle(document.querySelector('.ssr')||document.documentElement), g=n=>cs.getPropertyValue(n).trim();
+  col.fa.set(g('--fill-a'));col.fb.set(g('--fill-b'));col.ink.set(g('--ink'));col.sq.set(g('--sq'));col.warm.set(g('--warm'));col.bg.set(g('--sheet'));
+  renderer.setClearColor(col.bg,1);
+  items.forEach(it=>{it.lm.color.copy(col.ink);it.ms.color.copy(col.sq);});
+  ghostMat.color.copy(col.warm);
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readTheme);
+new MutationObserver(readTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+const toQuat=m=>new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().set(m[0][0],m[0][1],m[0][2],0,m[1][0],m[1][1],m[1][2],0,m[2][0],m[2][1],m[2][2],0,0,0,0,1));
+function normalized(n,v){ // position of world point v in the view at integer step n (before orientation)
+  const s=SIZE/M.A[n+M.S.D-1], c=ctrs[n], q=M.Q[n], d=[v[0]-c[0],v[1]-c[1],v[2]-c[2]];
+  return [0,1,2].map(i=>s*(q[i][0]*d[0]+q[i][1]*d[1]+q[i][2]*d[2]));
+}
+function load(key){
+  const S=SEQS[key];
+  M=buildSpiral(S);
+  items.forEach(it=>{group.remove(it.mesh);it.mb.dispose();it.ms.dispose();it.lm.dispose();});
+  items=M.pieces.map(pc=>{
+    const mb=new THREE.MeshLambertMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+    const ms=mb.clone();
+    const mesh=new THREE.Mesh(unit,[0,1,2,3,4,5].map(j=>(pc.sqA>=0&&(j>>1)===pc.sqA)?ms:mb));
+    const lm=new THREE.LineBasicMaterial({transparent:true});mesh.add(new THREE.LineSegments(unitE,lm));
+    group.add(mesh);return {mesh,mb,ms,lm,pc};
+  });
+  qs=M.Q.map(toQuat);
+  ctrs=M.boxes.map(b=>[0,1,2].map(a=>(b.lo[a]+b.hi[a])/2));
+  // turn the 3D model over if the dense corner (the first cube) would sit at the bottom
+  const c0=M.pieces[0], p0=normalized(S.N,[0,1,2].map(a=>(c0.lo[a]+c0.hi[a])/2));
+  orient=(S.D===3&&p0[1]<0)?new THREE.Matrix4().makeRotationX(Math.PI):new THREE.Matrix4();
+  // exact limit outline: edges SIZE·r^(i−D+1) along the step-0 axes, centred
+  const gl=[0.004,0.004,0.004];M.F0.forEach((f,i)=>gl[f.a]=SIZE*Math.pow(S.r,i-S.D+1));
+  ghost.scale.set(...gl);ghost.position.set(0,0,0);
+  ratios=Array.from({length:S.N+1},(_,n)=>M.A[n+1]/M.A[n]);
+  errs=Array.from({length:S.N+1},(_,n)=>M.err(n));
+  K=Math.max(...errs.map((e,n)=>e/Math.pow(S.alpha,n)));
+  $('gfib_step').max=S.N;
+  $('gfib_lede').innerHTML=S.D===2
+    ?`Rectangles with sides from two consecutive Fibonacci numbers, each built from the last by adding one square. Their proportions converge to the golden rectangle, <span class="m">1 : φ</span>.`
+    :`Boxes with edges from three consecutive ${S.name} numbers, each built from the last by adding one piece with a square face. Their proportions converge to the ${S.limit}, <span class="m">${S.prop}</span>.`;
+  $('gfib_sqLbl').textContent=S.D===2?'squares':'square faces';
+  $('gfib_limLbl').textContent=`exact ${S.limit}`;
+  $('gfib_seqLbl').textContent=`${S.name} numbers`;
+  $('gfib_hint').textContent=S.D===3?'Click to grow · drag to orbit · scroll to zoom':'Click to grow · scroll to zoom';
+  $('gfib_turnwrap').hidden=S.D!==3;$('gfib_turn').disabled=S.D!==3;
+  $('gfib_c1cap').innerHTML=`<span class="m">aₙ₊₁ / aₙ</span> against step, with the limit ${S.sym} dashed.`;
+  $('gfib_c2cap').innerHTML=`Largest edge error <span class="m">|aₙ − c${S.sym}ⁿ|</span> of the current ${S.D===2?'rectangle':'box'}, log scale, with the envelope <span class="m">${S.alpha.toFixed(4)}ⁿ</span> dashed.`;
+  $('gfib_notes').innerHTML=NOTES[key](S);
+  cam.dist=S.D===3?22:17;
+  readTheme();
+  t=0;setPlaying(false);shown=-1;drawCharts(true);
+}
+
+/* ---------- charts ---------- */
+const W=600,H=230,L=46,R=14,T=12,B=30;
+function drawCharts(force){
+  const S=M.S, NM=S.N, cur=Math.min(NM,Math.max(0,Math.round(t)));
+  if(cur===shown&&!force)return;shown=cur;
+  const xs=n=>L+(W-L-R)*n/NM;
+  const step=NM>24?5:4;
+  const axisX=()=>{let s='';for(let n=0;n<=NM;n+=step)s+=`<line class="grid" x1="${xs(n)}" x2="${xs(n)}" y1="${T}" y2="${H-B}"/><text x="${xs(n)}" y="${H-B+16}" text-anchor="middle">${n}</text>`;return s;};
+  const series=(pts,ys)=>{
+    const path=pts.map((v,n)=>`${n?'L':'M'}${xs(n).toFixed(1)},${ys(v).toFixed(1)}`).join('');
+    const done=pts.slice(0,cur+1).map((v,n)=>`${n?'L':'M'}${xs(n).toFixed(1)},${ys(v).toFixed(1)}`).join('');
+    let dots='';pts.forEach((v,n)=>{dots+=`<circle class="${n<=cur?'pt':'pt-f'}" cx="${xs(n).toFixed(1)}" cy="${ys(v).toFixed(1)}" r="2.6"/>`;});
+    return `<path class="ln-f" d="${path}"/><path class="ln" d="${done}"/>${dots}<circle class="cur" cx="${xs(cur).toFixed(1)}" cy="${ys(pts[cur]).toFixed(1)}" r="5"/>`;
+  };
+  const y1=v=>T+(H-T-B)*(2.1-v)/(2.1-0.9);
+  let s1=axisX();
+  for(const v of [1,1.25,1.5,1.75,2])s1+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y1(v)}" y2="${y1(v)}"/><text x="${L-6}" y="${y1(v)+4}" text-anchor="end">${v.toFixed(2)}</text>`;
+  s1+=`<line class="lim" x1="${L}" x2="${W-R}" y1="${y1(S.r)}" y2="${y1(S.r)}"/><text class="limt" x="${W-R}" y="${y1(S.r)-6}" text-anchor="end">${S.sym} = ${S.r.toFixed(4)}</text>`;
+  s1+=series(ratios,y1);
+  $('gfib_c1').innerHTML=s1;
+  const lo=Math.floor(Math.log10(Math.min(...errs.filter(e=>e>0),K*Math.pow(S.alpha,NM)))), hi=0;
+  const y2=v=>T+(H-T-B)*(hi-Math.log10(Math.max(v,10**lo)))/(hi-lo);
+  const supN=n=>String(n).replace(/-/g,'⁻').replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  let s2=axisX();
+  const every=hi-lo>5?2:1;
+  for(let e=lo;e<=hi;e+=every)s2+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y2(10**e)}" y2="${y2(10**e)}"/><text x="${L-6}" y="${y2(10**e)+4}" text-anchor="end">${e===0?'1':'10'+supN(e)}</text>`;
+  let env='';for(let n=0;n<=NM;n++)env+=`${n?'L':'M'}${xs(n).toFixed(1)},${y2(K*Math.pow(S.alpha,n)).toFixed(1)}`;
+  s2+=`<path class="lim" d="${env}"/>`+series(errs,y2);
+  $('gfib_c2').innerHTML=s2;
+  // readouts
+  const A=M.A, D=S.D, e=A.slice(cur,cur+D);
+  $('gfib_stepOut').textContent=`Step ${cur}`;
+  $('gfib_dimOut').textContent=e.join(' × ');
+  $('gfib_pill').textContent=`${D===2?'rectangle':'box'} ${e.join(' × ')}`;
+  const added=cur===0?(D===2?'— (first square)':'— (first cube)')
+    :D===2?`${A[cur]} × ${A[cur]}  (square)`:`${A[cur]} × ${A[cur+1]} × ${A[cur+1]}  (square ${A[cur+1]} × ${A[cur+1]})`;
+  let dl=`<dt>Added piece</dt><dd>${added}</dd>`;
+  for(let i=0;i<D-1;i++)dl+=`<dt>${'abc'[i+1]} / ${'abc'[i]}</dt><dd>${e[i+1]}/${e[i]} = ${(e[i+1]/e[i]).toFixed(6)}</dd>`;
+  dl+=`<dt>${S.sym}</dt><dd>${S.r.toFixed(6)}</dd>`;
+  $('gfib_dl').innerHTML=dl;
+  $('gfib_seqOut').innerHTML=A.slice(0,NM+D).map((v,i)=>i>=cur&&i<cur+D?`<b>${v}</b>`:v).join(', ');
+  let lg=0;e.forEach((v,i)=>lg+=Math.log(v)-i*Math.log(S.r));const g=Math.exp(lg/D);
+  const se=Math.max(...e.map((v,i)=>Math.abs(v/(g*Math.pow(S.r,i))-1)));
+  $('gfib_errOut').textContent=`${(se*100).toFixed(se<0.0001?5:se<0.001?4:se<0.1?2:1)}%`;
+  $('gfib_errBar').style.width=`${Math.min(100,se/0.3*100)}%`;
+  $('gfib_step').value=cur;
+}
+
+/* ---------- controls ---------- */
+function setPlaying(v){playing=v;$('gfib_bPlay').textContent=v?'Pause':'Play';}
+$('gfib_bPlay').addEventListener('click',()=>{if(!playing&&t>=M.S.N)t=0;setPlaying(!playing);});
+$('gfib_bRestart').addEventListener('click',()=>{t=0;setPlaying(true);});
+$('gfib_bBack').addEventListener('click',()=>{setPlaying(false);t=Math.max(0,Math.ceil(t)-1);});
+$('gfib_bFwd').addEventListener('click',()=>{setPlaying(false);t=Math.min(M.S.N,Math.floor(t)+1);});
+$('gfib_step').addEventListener('input',e=>{setPlaying(false);t=+e.target.value;});
+let turn=!reduce;$('gfib_turn').checked=turn;
+$('gfib_turn').addEventListener('change',e=>turn=e.target.checked);
+$('gfib_ghost').addEventListener('change',e=>ghost.visible=e.target.checked);
+
+
+/* ---------- camera ---------- */
+const cam={theta:-0.7,phi:1.12,dist:22};
+let lastInteract=0;const ptrs=new Map();let pinch0=0;
+canvas.addEventListener('pointerdown',e=>{downAt={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
+canvas.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const pr=ptrs.get(e.pointerId);
+  const dx=e.clientX-pr.x, dy=e.clientY-pr.y;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===1&&M.S.D===3){cam.theta-=dx*0.008;cam.phi=Math.min(Math.PI-0.12,Math.max(0.12,cam.phi-dy*0.008));}
+  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0>0&&d>0)cam.dist=Math.min(70,Math.max(4,cam.dist*pinch0/d));pinch0=d;}});
+let downAt=null;
+const up=e=>{ // a click without dragging starts the growth
+  if(downAt&&e.type==='pointerup'&&ptrs.size===1&&Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y)<5&&!playing){if(t>=M.S.N)t=0;setPlaying(true);}
+  downAt=null;ptrs.delete(e.pointerId);pinch0=0;};
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=Math.min(70,Math.max(4,cam.dist*Math.exp(e.deltaY*0.001)));lastInteract=performance.now();},{passive:false});
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(canvas);resize();
+
+/* ---------- frame loop ---------- */
+const ease=f=>f<0.5?4*f*f*f:1-Math.pow(-2*f+2,3)/2;
+let last=performance.now();
+const mS=new THREE.Matrix4(),mR=new THREE.Matrix4(),mT=new THREE.Matrix4(),qq=new THREE.Quaternion(),origin=new THREE.Vector3();
+let autoGo=false;
+function tick(now){
+  if(!ACT['gfib_']){last=now;requestAnimationFrame(tick);return;}
+  if(ACT['gogfib_']&&!autoGo){autoGo=true;if(!reduce&&!playing&&t<0.001)setPlaying(true);}
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  const S=M.S, D=S.D, NM=S.N;
+  if(playing){t+=dt*0.75;if(t>=NM){t=NM;setPlaying(false);}}
+  const n=Math.min(NM,Math.floor(t)), f=n>=NM?0:ease(t-n), n1=Math.min(NM,n+1);
+  // normalized view: current box centred, long edge = SIZE, step-0 orientation
+  const s=Math.exp((1-f)*Math.log(SIZE/M.A[n+D-1])+f*Math.log(SIZE/M.A[n1+D-1]));
+  const c=[0,1,2].map(a=>(1-f)*ctrs[n][a]+f*ctrs[n1][a]);
+  qq.copy(qs[n]);if(f>0)qq.slerp(qs[n1],f);
+  mR.makeRotationFromQuaternion(qq);mS.makeScale(s,s,s);mT.makeTranslation(-c[0],-c[1],-c[2]);
+  group.matrix.copy(orient).multiply(mR).multiply(mS).multiply(mT);group.matrixWorldNeedsUpdate=true;
+
+  if(D===3){
+    if(turn&&now-lastInteract>2500)cam.theta+=dt*0.14;
+    const sp=Math.sin(cam.phi);
+    camera.position.set(cam.dist*sp*Math.sin(cam.theta),cam.dist*Math.cos(cam.phi),cam.dist*sp*Math.cos(cam.theta));
+  }else camera.position.set(0,0,cam.dist);
+  camera.up.set(0,1,0);camera.lookAt(origin);
+  const fpx=canvas.clientHeight/(2*Math.tan(camera.fov*Math.PI/360)), dist=cam.dist;
+
+  items.forEach((it,k)=>{
+    const pc=it.pc;
+    const g=k<=n?1:(k===n+1?f:0);
+    if(g<=0.001){it.mesh.visible=false;return;}
+    const lo=pc.lo.slice(), hi=pc.hi.slice();
+    if(g<1){const Lg=(hi[pc.ax]-lo[pc.ax])*g;if(pc.dir>0)hi[pc.ax]=lo[pc.ax]+Lg;else lo[pc.ax]=hi[pc.ax]-Lg;}
+    const sz=[0,1,2].map(a=>hi[a]-lo[a]);
+    const px=Math.min(...sz.filter(v=>v>0))*s/dist*fpx;
+    if(px<0.4){it.mesh.visible=false;return;}
+    it.mesh.visible=true;
+    it.mesh.position.set((lo[0]+hi[0])/2,(lo[1]+hi[1])/2,(lo[2]+hi[2])/2);
+    it.mesh.scale.set(Math.max(sz[0],1e-3/s),Math.max(sz[1],1e-3/s),Math.max(sz[2],1e-3/s));
+    const w=0.5-0.5*Math.cos(2*Math.PI*k/(2*D));
+    it.mb.color.copy(col.fa).lerp(col.fb,w*0.85);
+    it.lm.opacity=0.55*Math.min(1,Math.max(0,(px-1.5)/8));
+  });
+  drawCharts(false);
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+load('fib');requestAnimationFrame(tick);
+})();
+
+
+
+(function(){
+if(typeof THREE==='undefined')return;
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SIZE=6;
+const NOTES={
+  fib:S=>`<p class="note1">Each rectangle has sides <span class="m">aₙ × aₙ₊₁</span> from the Fibonacci numbers (<span class="m">aₙ₊₂ = aₙ₊₁ + aₙ</span>). Each step adds a square, <span class="m">aₙ₊₁ × aₙ₊₁</span>, because <span class="m">aₙ₊₂ − aₙ = aₙ₊₁</span>. The ratio of consecutive terms tends to φ, so the rectangles approach the golden rectangle. Because φ is a Pisot number (the other root of <span class="m">r² = r + 1</span> has absolute value 0.618), the gap between the integer sides and exact geometric growth shrinks by that factor each step.</p>`,
+  pad:S=>`<p class="note1">Each box has edges <span class="m">aₙ × aₙ₊₁ × aₙ₊₂</span> from the Padovan numbers (<span class="m">aₙ₊₃ = aₙ₊₁ + aₙ</span>). Each step lengthens the shortest edge, adding a piece <span class="m">aₙ₊₁ × aₙ₊₁ × aₙ₊₂</span> with a square face, because <span class="m">aₙ₊₃ − aₙ = aₙ₊₁</span>. The ratio of consecutive terms tends to ρ, so the boxes approach the plastic cuboid, <span class="m">1 : ρ : ρ²</span>. Because ρ is a Pisot number (the other two roots of <span class="m">r³ = r + 1</span> have absolute value 0.869), the gap to exact geometric growth shrinks by that factor each step.</p>`,
+  nar:S=>`<p class="note1">Each box has edges <span class="m">aₙ × aₙ₊₁ × aₙ₊₂</span> from the Narayana numbers (<span class="m">aₙ₊₃ = aₙ₊₂ + aₙ</span>). Each step lengthens the shortest edge, adding a piece <span class="m">aₙ₊₁ × aₙ₊₂ × aₙ₊₂</span> with a square face, because <span class="m">aₙ₊₃ − aₙ = aₙ₊₂</span>. The ratio of consecutive terms tends to ψ, so the boxes approach the supergolden cuboid, <span class="m">1 : ψ : ψ²</span>. Because ψ is a Pisot number (the other two roots of <span class="m">r³ = r² + 1</span> have absolute value 0.826), the gap to exact geometric growth shrinks by that factor each step.</p>`
+};
+
+/* ---------- scene ---------- */
+const canvas=$('gpad_view');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(30,1,0.02,600);
+scene.add(new THREE.AmbientLight(0xffffff,0.62));
+const sun=new THREE.DirectionalLight(0xffffff,0.55);sun.position.set(-4,9,6);scene.add(sun);
+const fillL=new THREE.DirectionalLight(0xffffff,0.2);fillL.position.set(6,-3,-5);scene.add(fillL);
+const group=new THREE.Group();group.matrixAutoUpdate=false;scene.add(group);
+const unit=new THREE.BoxGeometry(1,1,1), unitE=new THREE.EdgesGeometry(unit);
+const col={fa:new THREE.Color(),fb:new THREE.Color(),ink:new THREE.Color(),sq:new THREE.Color(),warm:new THREE.Color(),bg:new THREE.Color()};
+const ghostMat=new THREE.LineBasicMaterial({transparent:true,opacity:0.95,depthTest:false});
+const ghost=new THREE.LineSegments(unitE,ghostMat);ghost.renderOrder=5;scene.add(ghost);
+
+let M=null, items=[], qs=[], ctrs=[], orient=new THREE.Matrix4(), t=0, playing=false, shown=-1, ratios=[], errs=[], K=1;
+
+function readTheme(){
+  const cs=getComputedStyle(document.querySelector('.ssr')||document.documentElement), g=n=>cs.getPropertyValue(n).trim();
+  col.fa.set(g('--fill-a'));col.fb.set(g('--fill-b'));col.ink.set(g('--ink'));col.sq.set(g('--sq'));col.warm.set(g('--warm'));col.bg.set(g('--sheet'));
+  renderer.setClearColor(col.bg,1);
+  items.forEach(it=>{it.lm.color.copy(col.ink);it.ms.color.copy(col.sq);});
+  ghostMat.color.copy(col.warm);
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readTheme);
+new MutationObserver(readTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+const toQuat=m=>new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().set(m[0][0],m[0][1],m[0][2],0,m[1][0],m[1][1],m[1][2],0,m[2][0],m[2][1],m[2][2],0,0,0,0,1));
+function normalized(n,v){ // position of world point v in the view at integer step n (before orientation)
+  const s=SIZE/M.A[n+M.S.D-1], c=ctrs[n], q=M.Q[n], d=[v[0]-c[0],v[1]-c[1],v[2]-c[2]];
+  return [0,1,2].map(i=>s*(q[i][0]*d[0]+q[i][1]*d[1]+q[i][2]*d[2]));
+}
+function load(key){
+  const S=SEQS[key];
+  M=buildSpiral(S);
+  items.forEach(it=>{group.remove(it.mesh);it.mb.dispose();it.ms.dispose();it.lm.dispose();});
+  items=M.pieces.map(pc=>{
+    const mb=new THREE.MeshLambertMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+    const ms=mb.clone();
+    const mesh=new THREE.Mesh(unit,[0,1,2,3,4,5].map(j=>(pc.sqA>=0&&(j>>1)===pc.sqA)?ms:mb));
+    const lm=new THREE.LineBasicMaterial({transparent:true});mesh.add(new THREE.LineSegments(unitE,lm));
+    group.add(mesh);return {mesh,mb,ms,lm,pc};
+  });
+  qs=M.Q.map(toQuat);
+  ctrs=M.boxes.map(b=>[0,1,2].map(a=>(b.lo[a]+b.hi[a])/2));
+  // turn the 3D model over if the dense corner (the first cube) would sit at the bottom
+  const c0=M.pieces[0], p0=normalized(S.N,[0,1,2].map(a=>(c0.lo[a]+c0.hi[a])/2));
+  orient=(S.D===3&&p0[1]<0)?new THREE.Matrix4().makeRotationX(Math.PI):new THREE.Matrix4();
+  // exact limit outline: edges SIZE·r^(i−D+1) along the step-0 axes, centred
+  const gl=[0.004,0.004,0.004];M.F0.forEach((f,i)=>gl[f.a]=SIZE*Math.pow(S.r,i-S.D+1));
+  ghost.scale.set(...gl);ghost.position.set(0,0,0);
+  ratios=Array.from({length:S.N+1},(_,n)=>M.A[n+1]/M.A[n]);
+  errs=Array.from({length:S.N+1},(_,n)=>M.err(n));
+  K=Math.max(...errs.map((e,n)=>e/Math.pow(S.alpha,n)));
+  $('gpad_step').max=S.N;
+  $('gpad_lede').innerHTML=S.D===2
+    ?`Rectangles with sides from two consecutive Fibonacci numbers, each built from the last by adding one square. Their proportions converge to the golden rectangle, <span class="m">1 : φ</span>.`
+    :`Boxes with edges from three consecutive ${S.name} numbers, each built from the last by adding one piece with a square face. Their proportions converge to the ${S.limit}, <span class="m">${S.prop}</span>.`;
+  $('gpad_sqLbl').textContent=S.D===2?'squares':'square faces';
+  $('gpad_limLbl').textContent=`exact ${S.limit}`;
+  $('gpad_seqLbl').textContent=`${S.name} numbers`;
+  $('gpad_hint').textContent=S.D===3?'Click to grow · drag to orbit · scroll to zoom':'Click to grow · scroll to zoom';
+  $('gpad_turnwrap').hidden=S.D!==3;$('gpad_turn').disabled=S.D!==3;
+  $('gpad_c1cap').innerHTML=`<span class="m">aₙ₊₁ / aₙ</span> against step, with the limit ${S.sym} dashed.`;
+  $('gpad_c2cap').innerHTML=`Largest edge error <span class="m">|aₙ − c${S.sym}ⁿ|</span> of the current ${S.D===2?'rectangle':'box'}, log scale, with the envelope <span class="m">${S.alpha.toFixed(4)}ⁿ</span> dashed.`;
+  $('gpad_notes').innerHTML=NOTES[key](S);
+  cam.dist=S.D===3?22:17;
+  readTheme();
+  t=0;setPlaying(false);shown=-1;drawCharts(true);
+}
+
+/* ---------- charts ---------- */
+const W=600,H=230,L=46,R=14,T=12,B=30;
+function drawCharts(force){
+  const S=M.S, NM=S.N, cur=Math.min(NM,Math.max(0,Math.round(t)));
+  if(cur===shown&&!force)return;shown=cur;
+  const xs=n=>L+(W-L-R)*n/NM;
+  const step=NM>24?5:4;
+  const axisX=()=>{let s='';for(let n=0;n<=NM;n+=step)s+=`<line class="grid" x1="${xs(n)}" x2="${xs(n)}" y1="${T}" y2="${H-B}"/><text x="${xs(n)}" y="${H-B+16}" text-anchor="middle">${n}</text>`;return s;};
+  const series=(pts,ys)=>{
+    const path=pts.map((v,n)=>`${n?'L':'M'}${xs(n).toFixed(1)},${ys(v).toFixed(1)}`).join('');
+    const done=pts.slice(0,cur+1).map((v,n)=>`${n?'L':'M'}${xs(n).toFixed(1)},${ys(v).toFixed(1)}`).join('');
+    let dots='';pts.forEach((v,n)=>{dots+=`<circle class="${n<=cur?'pt':'pt-f'}" cx="${xs(n).toFixed(1)}" cy="${ys(v).toFixed(1)}" r="2.6"/>`;});
+    return `<path class="ln-f" d="${path}"/><path class="ln" d="${done}"/>${dots}<circle class="cur" cx="${xs(cur).toFixed(1)}" cy="${ys(pts[cur]).toFixed(1)}" r="5"/>`;
+  };
+  const y1=v=>T+(H-T-B)*(2.1-v)/(2.1-0.9);
+  let s1=axisX();
+  for(const v of [1,1.25,1.5,1.75,2])s1+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y1(v)}" y2="${y1(v)}"/><text x="${L-6}" y="${y1(v)+4}" text-anchor="end">${v.toFixed(2)}</text>`;
+  s1+=`<line class="lim" x1="${L}" x2="${W-R}" y1="${y1(S.r)}" y2="${y1(S.r)}"/><text class="limt" x="${W-R}" y="${y1(S.r)-6}" text-anchor="end">${S.sym} = ${S.r.toFixed(4)}</text>`;
+  s1+=series(ratios,y1);
+  $('gpad_c1').innerHTML=s1;
+  const lo=Math.floor(Math.log10(Math.min(...errs.filter(e=>e>0),K*Math.pow(S.alpha,NM)))), hi=0;
+  const y2=v=>T+(H-T-B)*(hi-Math.log10(Math.max(v,10**lo)))/(hi-lo);
+  const supN=n=>String(n).replace(/-/g,'⁻').replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  let s2=axisX();
+  const every=hi-lo>5?2:1;
+  for(let e=lo;e<=hi;e+=every)s2+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y2(10**e)}" y2="${y2(10**e)}"/><text x="${L-6}" y="${y2(10**e)+4}" text-anchor="end">${e===0?'1':'10'+supN(e)}</text>`;
+  let env='';for(let n=0;n<=NM;n++)env+=`${n?'L':'M'}${xs(n).toFixed(1)},${y2(K*Math.pow(S.alpha,n)).toFixed(1)}`;
+  s2+=`<path class="lim" d="${env}"/>`+series(errs,y2);
+  $('gpad_c2').innerHTML=s2;
+  // readouts
+  const A=M.A, D=S.D, e=A.slice(cur,cur+D);
+  $('gpad_stepOut').textContent=`Step ${cur}`;
+  $('gpad_dimOut').textContent=e.join(' × ');
+  $('gpad_pill').textContent=`${D===2?'rectangle':'box'} ${e.join(' × ')}`;
+  const added=cur===0?(D===2?'— (first square)':'— (first cube)')
+    :D===2?`${A[cur]} × ${A[cur]}  (square)`:`${A[cur]} × ${A[cur+1]} × ${A[cur+1]}  (square ${A[cur+1]} × ${A[cur+1]})`;
+  let dl=`<dt>Added piece</dt><dd>${added}</dd>`;
+  for(let i=0;i<D-1;i++)dl+=`<dt>${'abc'[i+1]} / ${'abc'[i]}</dt><dd>${e[i+1]}/${e[i]} = ${(e[i+1]/e[i]).toFixed(6)}</dd>`;
+  dl+=`<dt>${S.sym}</dt><dd>${S.r.toFixed(6)}</dd>`;
+  $('gpad_dl').innerHTML=dl;
+  $('gpad_seqOut').innerHTML=A.slice(0,NM+D).map((v,i)=>i>=cur&&i<cur+D?`<b>${v}</b>`:v).join(', ');
+  let lg=0;e.forEach((v,i)=>lg+=Math.log(v)-i*Math.log(S.r));const g=Math.exp(lg/D);
+  const se=Math.max(...e.map((v,i)=>Math.abs(v/(g*Math.pow(S.r,i))-1)));
+  $('gpad_errOut').textContent=`${(se*100).toFixed(se<0.0001?5:se<0.001?4:se<0.1?2:1)}%`;
+  $('gpad_errBar').style.width=`${Math.min(100,se/0.3*100)}%`;
+  $('gpad_step').value=cur;
+}
+
+/* ---------- controls ---------- */
+function setPlaying(v){playing=v;$('gpad_bPlay').textContent=v?'Pause':'Play';}
+$('gpad_bPlay').addEventListener('click',()=>{if(!playing&&t>=M.S.N)t=0;setPlaying(!playing);});
+$('gpad_bRestart').addEventListener('click',()=>{t=0;setPlaying(true);});
+$('gpad_bBack').addEventListener('click',()=>{setPlaying(false);t=Math.max(0,Math.ceil(t)-1);});
+$('gpad_bFwd').addEventListener('click',()=>{setPlaying(false);t=Math.min(M.S.N,Math.floor(t)+1);});
+$('gpad_step').addEventListener('input',e=>{setPlaying(false);t=+e.target.value;});
+let turn=!reduce;$('gpad_turn').checked=turn;
+$('gpad_turn').addEventListener('change',e=>turn=e.target.checked);
+$('gpad_ghost').addEventListener('change',e=>ghost.visible=e.target.checked);
+
+
+/* ---------- camera ---------- */
+const cam={theta:-0.7,phi:1.12,dist:22};
+let lastInteract=0;const ptrs=new Map();let pinch0=0;
+canvas.addEventListener('pointerdown',e=>{downAt={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
+canvas.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const pr=ptrs.get(e.pointerId);
+  const dx=e.clientX-pr.x, dy=e.clientY-pr.y;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===1&&M.S.D===3){cam.theta-=dx*0.008;cam.phi=Math.min(Math.PI-0.12,Math.max(0.12,cam.phi-dy*0.008));}
+  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0>0&&d>0)cam.dist=Math.min(70,Math.max(4,cam.dist*pinch0/d));pinch0=d;}});
+let downAt=null;
+const up=e=>{ // a click without dragging starts the growth
+  if(downAt&&e.type==='pointerup'&&ptrs.size===1&&Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y)<5&&!playing){if(t>=M.S.N)t=0;setPlaying(true);}
+  downAt=null;ptrs.delete(e.pointerId);pinch0=0;};
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=Math.min(70,Math.max(4,cam.dist*Math.exp(e.deltaY*0.001)));lastInteract=performance.now();},{passive:false});
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(canvas);resize();
+
+/* ---------- frame loop ---------- */
+const ease=f=>f<0.5?4*f*f*f:1-Math.pow(-2*f+2,3)/2;
+let last=performance.now();
+const mS=new THREE.Matrix4(),mR=new THREE.Matrix4(),mT=new THREE.Matrix4(),qq=new THREE.Quaternion(),origin=new THREE.Vector3();
+let autoGo=false;
+function tick(now){
+  if(!ACT['gpad_']){last=now;requestAnimationFrame(tick);return;}
+  if(ACT['gogpad_']&&!autoGo){autoGo=true;if(!reduce&&!playing&&t<0.001)setPlaying(true);}
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  const S=M.S, D=S.D, NM=S.N;
+  if(playing){t+=dt*0.75;if(t>=NM){t=NM;setPlaying(false);}}
+  const n=Math.min(NM,Math.floor(t)), f=n>=NM?0:ease(t-n), n1=Math.min(NM,n+1);
+  // normalized view: current box centred, long edge = SIZE, step-0 orientation
+  const s=Math.exp((1-f)*Math.log(SIZE/M.A[n+D-1])+f*Math.log(SIZE/M.A[n1+D-1]));
+  const c=[0,1,2].map(a=>(1-f)*ctrs[n][a]+f*ctrs[n1][a]);
+  qq.copy(qs[n]);if(f>0)qq.slerp(qs[n1],f);
+  mR.makeRotationFromQuaternion(qq);mS.makeScale(s,s,s);mT.makeTranslation(-c[0],-c[1],-c[2]);
+  group.matrix.copy(orient).multiply(mR).multiply(mS).multiply(mT);group.matrixWorldNeedsUpdate=true;
+
+  if(D===3){
+    if(turn&&now-lastInteract>2500)cam.theta+=dt*0.14;
+    const sp=Math.sin(cam.phi);
+    camera.position.set(cam.dist*sp*Math.sin(cam.theta),cam.dist*Math.cos(cam.phi),cam.dist*sp*Math.cos(cam.theta));
+  }else camera.position.set(0,0,cam.dist);
+  camera.up.set(0,1,0);camera.lookAt(origin);
+  const fpx=canvas.clientHeight/(2*Math.tan(camera.fov*Math.PI/360)), dist=cam.dist;
+
+  items.forEach((it,k)=>{
+    const pc=it.pc;
+    const g=k<=n?1:(k===n+1?f:0);
+    if(g<=0.001){it.mesh.visible=false;return;}
+    const lo=pc.lo.slice(), hi=pc.hi.slice();
+    if(g<1){const Lg=(hi[pc.ax]-lo[pc.ax])*g;if(pc.dir>0)hi[pc.ax]=lo[pc.ax]+Lg;else lo[pc.ax]=hi[pc.ax]-Lg;}
+    const sz=[0,1,2].map(a=>hi[a]-lo[a]);
+    const px=Math.min(...sz.filter(v=>v>0))*s/dist*fpx;
+    if(px<0.4){it.mesh.visible=false;return;}
+    it.mesh.visible=true;
+    it.mesh.position.set((lo[0]+hi[0])/2,(lo[1]+hi[1])/2,(lo[2]+hi[2])/2);
+    it.mesh.scale.set(Math.max(sz[0],1e-3/s),Math.max(sz[1],1e-3/s),Math.max(sz[2],1e-3/s));
+    const w=0.5-0.5*Math.cos(2*Math.PI*k/(2*D));
+    it.mb.color.copy(col.fa).lerp(col.fb,w*0.85);
+    it.lm.opacity=0.55*Math.min(1,Math.max(0,(px-1.5)/8));
+  });
+  drawCharts(false);
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+load('pad');requestAnimationFrame(tick);
+})();
+
+
+
+(function(){
+if(typeof THREE==='undefined')return;
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SIZE=6;
+const NOTES={
+  fib:S=>`<p class="note1">Each rectangle has sides <span class="m">aₙ × aₙ₊₁</span> from the Fibonacci numbers (<span class="m">aₙ₊₂ = aₙ₊₁ + aₙ</span>). Each step adds a square, <span class="m">aₙ₊₁ × aₙ₊₁</span>, because <span class="m">aₙ₊₂ − aₙ = aₙ₊₁</span>. The ratio of consecutive terms tends to φ, so the rectangles approach the golden rectangle. Because φ is a Pisot number (the other root of <span class="m">r² = r + 1</span> has absolute value 0.618), the gap between the integer sides and exact geometric growth shrinks by that factor each step.</p>`,
+  pad:S=>`<p class="note1">Each box has edges <span class="m">aₙ × aₙ₊₁ × aₙ₊₂</span> from the Padovan numbers (<span class="m">aₙ₊₃ = aₙ₊₁ + aₙ</span>). Each step lengthens the shortest edge, adding a piece <span class="m">aₙ₊₁ × aₙ₊₁ × aₙ₊₂</span> with a square face, because <span class="m">aₙ₊₃ − aₙ = aₙ₊₁</span>. The ratio of consecutive terms tends to ρ, so the boxes approach the plastic cuboid, <span class="m">1 : ρ : ρ²</span>. Because ρ is a Pisot number (the other two roots of <span class="m">r³ = r + 1</span> have absolute value 0.869), the gap to exact geometric growth shrinks by that factor each step.</p>`,
+  nar:S=>`<p class="note1">Each box has edges <span class="m">aₙ × aₙ₊₁ × aₙ₊₂</span> from the Narayana numbers (<span class="m">aₙ₊₃ = aₙ₊₂ + aₙ</span>). Each step lengthens the shortest edge, adding a piece <span class="m">aₙ₊₁ × aₙ₊₂ × aₙ₊₂</span> with a square face, because <span class="m">aₙ₊₃ − aₙ = aₙ₊₂</span>. The ratio of consecutive terms tends to ψ, so the boxes approach the supergolden cuboid, <span class="m">1 : ψ : ψ²</span>. Because ψ is a Pisot number (the other two roots of <span class="m">r³ = r² + 1</span> have absolute value 0.826), the gap to exact geometric growth shrinks by that factor each step.</p>`
+};
+
+/* ---------- scene ---------- */
+const canvas=$('gnar_view');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(30,1,0.02,600);
+scene.add(new THREE.AmbientLight(0xffffff,0.62));
+const sun=new THREE.DirectionalLight(0xffffff,0.55);sun.position.set(-4,9,6);scene.add(sun);
+const fillL=new THREE.DirectionalLight(0xffffff,0.2);fillL.position.set(6,-3,-5);scene.add(fillL);
+const group=new THREE.Group();group.matrixAutoUpdate=false;scene.add(group);
+const unit=new THREE.BoxGeometry(1,1,1), unitE=new THREE.EdgesGeometry(unit);
+const col={fa:new THREE.Color(),fb:new THREE.Color(),ink:new THREE.Color(),sq:new THREE.Color(),warm:new THREE.Color(),bg:new THREE.Color()};
+const ghostMat=new THREE.LineBasicMaterial({transparent:true,opacity:0.95,depthTest:false});
+const ghost=new THREE.LineSegments(unitE,ghostMat);ghost.renderOrder=5;scene.add(ghost);
+
+let M=null, items=[], qs=[], ctrs=[], orient=new THREE.Matrix4(), t=0, playing=false, shown=-1, ratios=[], errs=[], K=1;
+
+function readTheme(){
+  const cs=getComputedStyle(document.querySelector('.ssr')||document.documentElement), g=n=>cs.getPropertyValue(n).trim();
+  col.fa.set(g('--fill-a'));col.fb.set(g('--fill-b'));col.ink.set(g('--ink'));col.sq.set(g('--sq'));col.warm.set(g('--warm'));col.bg.set(g('--sheet'));
+  renderer.setClearColor(col.bg,1);
+  items.forEach(it=>{it.lm.color.copy(col.ink);it.ms.color.copy(col.sq);});
+  ghostMat.color.copy(col.warm);
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readTheme);
+new MutationObserver(readTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+const toQuat=m=>new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().set(m[0][0],m[0][1],m[0][2],0,m[1][0],m[1][1],m[1][2],0,m[2][0],m[2][1],m[2][2],0,0,0,0,1));
+function normalized(n,v){ // position of world point v in the view at integer step n (before orientation)
+  const s=SIZE/M.A[n+M.S.D-1], c=ctrs[n], q=M.Q[n], d=[v[0]-c[0],v[1]-c[1],v[2]-c[2]];
+  return [0,1,2].map(i=>s*(q[i][0]*d[0]+q[i][1]*d[1]+q[i][2]*d[2]));
+}
+function load(key){
+  const S=SEQS[key];
+  M=buildSpiral(S);
+  items.forEach(it=>{group.remove(it.mesh);it.mb.dispose();it.ms.dispose();it.lm.dispose();});
+  items=M.pieces.map(pc=>{
+    const mb=new THREE.MeshLambertMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});
+    const ms=mb.clone();
+    const mesh=new THREE.Mesh(unit,[0,1,2,3,4,5].map(j=>(pc.sqA>=0&&(j>>1)===pc.sqA)?ms:mb));
+    const lm=new THREE.LineBasicMaterial({transparent:true});mesh.add(new THREE.LineSegments(unitE,lm));
+    group.add(mesh);return {mesh,mb,ms,lm,pc};
+  });
+  qs=M.Q.map(toQuat);
+  ctrs=M.boxes.map(b=>[0,1,2].map(a=>(b.lo[a]+b.hi[a])/2));
+  // turn the 3D model over if the dense corner (the first cube) would sit at the bottom
+  const c0=M.pieces[0], p0=normalized(S.N,[0,1,2].map(a=>(c0.lo[a]+c0.hi[a])/2));
+  orient=(S.D===3&&p0[1]<0)?new THREE.Matrix4().makeRotationX(Math.PI):new THREE.Matrix4();
+  // exact limit outline: edges SIZE·r^(i−D+1) along the step-0 axes, centred
+  const gl=[0.004,0.004,0.004];M.F0.forEach((f,i)=>gl[f.a]=SIZE*Math.pow(S.r,i-S.D+1));
+  ghost.scale.set(...gl);ghost.position.set(0,0,0);
+  ratios=Array.from({length:S.N+1},(_,n)=>M.A[n+1]/M.A[n]);
+  errs=Array.from({length:S.N+1},(_,n)=>M.err(n));
+  K=Math.max(...errs.map((e,n)=>e/Math.pow(S.alpha,n)));
+  $('gnar_step').max=S.N;
+  $('gnar_lede').innerHTML=S.D===2
+    ?`Rectangles with sides from two consecutive Fibonacci numbers, each built from the last by adding one square. Their proportions converge to the golden rectangle, <span class="m">1 : φ</span>.`
+    :`Boxes with edges from three consecutive ${S.name} numbers, each built from the last by adding one piece with a square face. Their proportions converge to the ${S.limit}, <span class="m">${S.prop}</span>.`;
+  $('gnar_sqLbl').textContent=S.D===2?'squares':'square faces';
+  $('gnar_limLbl').textContent=`exact ${S.limit}`;
+  $('gnar_seqLbl').textContent=`${S.name} numbers`;
+  $('gnar_hint').textContent=S.D===3?'Click to grow · drag to orbit · scroll to zoom':'Click to grow · scroll to zoom';
+  $('gnar_turnwrap').hidden=S.D!==3;$('gnar_turn').disabled=S.D!==3;
+  $('gnar_c1cap').innerHTML=`<span class="m">aₙ₊₁ / aₙ</span> against step, with the limit ${S.sym} dashed.`;
+  $('gnar_c2cap').innerHTML=`Largest edge error <span class="m">|aₙ − c${S.sym}ⁿ|</span> of the current ${S.D===2?'rectangle':'box'}, log scale, with the envelope <span class="m">${S.alpha.toFixed(4)}ⁿ</span> dashed.`;
+  $('gnar_notes').innerHTML=NOTES[key](S);
+  cam.dist=S.D===3?22:17;
+  readTheme();
+  t=0;setPlaying(false);shown=-1;drawCharts(true);
+}
+
+/* ---------- charts ---------- */
+const W=600,H=230,L=46,R=14,T=12,B=30;
+function drawCharts(force){
+  const S=M.S, NM=S.N, cur=Math.min(NM,Math.max(0,Math.round(t)));
+  if(cur===shown&&!force)return;shown=cur;
+  const xs=n=>L+(W-L-R)*n/NM;
+  const step=NM>24?5:4;
+  const axisX=()=>{let s='';for(let n=0;n<=NM;n+=step)s+=`<line class="grid" x1="${xs(n)}" x2="${xs(n)}" y1="${T}" y2="${H-B}"/><text x="${xs(n)}" y="${H-B+16}" text-anchor="middle">${n}</text>`;return s;};
+  const series=(pts,ys)=>{
+    const path=pts.map((v,n)=>`${n?'L':'M'}${xs(n).toFixed(1)},${ys(v).toFixed(1)}`).join('');
+    const done=pts.slice(0,cur+1).map((v,n)=>`${n?'L':'M'}${xs(n).toFixed(1)},${ys(v).toFixed(1)}`).join('');
+    let dots='';pts.forEach((v,n)=>{dots+=`<circle class="${n<=cur?'pt':'pt-f'}" cx="${xs(n).toFixed(1)}" cy="${ys(v).toFixed(1)}" r="2.6"/>`;});
+    return `<path class="ln-f" d="${path}"/><path class="ln" d="${done}"/>${dots}<circle class="cur" cx="${xs(cur).toFixed(1)}" cy="${ys(pts[cur]).toFixed(1)}" r="5"/>`;
+  };
+  const y1=v=>T+(H-T-B)*(2.1-v)/(2.1-0.9);
+  let s1=axisX();
+  for(const v of [1,1.25,1.5,1.75,2])s1+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y1(v)}" y2="${y1(v)}"/><text x="${L-6}" y="${y1(v)+4}" text-anchor="end">${v.toFixed(2)}</text>`;
+  s1+=`<line class="lim" x1="${L}" x2="${W-R}" y1="${y1(S.r)}" y2="${y1(S.r)}"/><text class="limt" x="${W-R}" y="${y1(S.r)-6}" text-anchor="end">${S.sym} = ${S.r.toFixed(4)}</text>`;
+  s1+=series(ratios,y1);
+  $('gnar_c1').innerHTML=s1;
+  const lo=Math.floor(Math.log10(Math.min(...errs.filter(e=>e>0),K*Math.pow(S.alpha,NM)))), hi=0;
+  const y2=v=>T+(H-T-B)*(hi-Math.log10(Math.max(v,10**lo)))/(hi-lo);
+  const supN=n=>String(n).replace(/-/g,'⁻').replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  let s2=axisX();
+  const every=hi-lo>5?2:1;
+  for(let e=lo;e<=hi;e+=every)s2+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y2(10**e)}" y2="${y2(10**e)}"/><text x="${L-6}" y="${y2(10**e)+4}" text-anchor="end">${e===0?'1':'10'+supN(e)}</text>`;
+  let env='';for(let n=0;n<=NM;n++)env+=`${n?'L':'M'}${xs(n).toFixed(1)},${y2(K*Math.pow(S.alpha,n)).toFixed(1)}`;
+  s2+=`<path class="lim" d="${env}"/>`+series(errs,y2);
+  $('gnar_c2').innerHTML=s2;
+  // readouts
+  const A=M.A, D=S.D, e=A.slice(cur,cur+D);
+  $('gnar_stepOut').textContent=`Step ${cur}`;
+  $('gnar_dimOut').textContent=e.join(' × ');
+  $('gnar_pill').textContent=`${D===2?'rectangle':'box'} ${e.join(' × ')}`;
+  const added=cur===0?(D===2?'— (first square)':'— (first cube)')
+    :D===2?`${A[cur]} × ${A[cur]}  (square)`:`${A[cur]} × ${A[cur+1]} × ${A[cur+1]}  (square ${A[cur+1]} × ${A[cur+1]})`;
+  let dl=`<dt>Added piece</dt><dd>${added}</dd>`;
+  for(let i=0;i<D-1;i++)dl+=`<dt>${'abc'[i+1]} / ${'abc'[i]}</dt><dd>${e[i+1]}/${e[i]} = ${(e[i+1]/e[i]).toFixed(6)}</dd>`;
+  dl+=`<dt>${S.sym}</dt><dd>${S.r.toFixed(6)}</dd>`;
+  $('gnar_dl').innerHTML=dl;
+  $('gnar_seqOut').innerHTML=A.slice(0,NM+D).map((v,i)=>i>=cur&&i<cur+D?`<b>${v}</b>`:v).join(', ');
+  let lg=0;e.forEach((v,i)=>lg+=Math.log(v)-i*Math.log(S.r));const g=Math.exp(lg/D);
+  const se=Math.max(...e.map((v,i)=>Math.abs(v/(g*Math.pow(S.r,i))-1)));
+  $('gnar_errOut').textContent=`${(se*100).toFixed(se<0.0001?5:se<0.001?4:se<0.1?2:1)}%`;
+  $('gnar_errBar').style.width=`${Math.min(100,se/0.3*100)}%`;
+  $('gnar_step').value=cur;
+}
+
+/* ---------- controls ---------- */
+function setPlaying(v){playing=v;$('gnar_bPlay').textContent=v?'Pause':'Play';}
+$('gnar_bPlay').addEventListener('click',()=>{if(!playing&&t>=M.S.N)t=0;setPlaying(!playing);});
+$('gnar_bRestart').addEventListener('click',()=>{t=0;setPlaying(true);});
+$('gnar_bBack').addEventListener('click',()=>{setPlaying(false);t=Math.max(0,Math.ceil(t)-1);});
+$('gnar_bFwd').addEventListener('click',()=>{setPlaying(false);t=Math.min(M.S.N,Math.floor(t)+1);});
+$('gnar_step').addEventListener('input',e=>{setPlaying(false);t=+e.target.value;});
+let turn=!reduce;$('gnar_turn').checked=turn;
+$('gnar_turn').addEventListener('change',e=>turn=e.target.checked);
+$('gnar_ghost').addEventListener('change',e=>ghost.visible=e.target.checked);
+
+
+/* ---------- camera ---------- */
+const cam={theta:-0.7,phi:1.12,dist:22};
+let lastInteract=0;const ptrs=new Map();let pinch0=0;
+canvas.addEventListener('pointerdown',e=>{downAt={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);}});
+canvas.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const pr=ptrs.get(e.pointerId);
+  const dx=e.clientX-pr.x, dy=e.clientY-pr.y;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastInteract=performance.now();
+  if(ptrs.size===1&&M.S.D===3){cam.theta-=dx*0.008;cam.phi=Math.min(Math.PI-0.12,Math.max(0.12,cam.phi-dy*0.008));}
+  else if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0>0&&d>0)cam.dist=Math.min(70,Math.max(4,cam.dist*pinch0/d));pinch0=d;}});
+let downAt=null;
+const up=e=>{ // a click without dragging starts the growth
+  if(downAt&&e.type==='pointerup'&&ptrs.size===1&&Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y)<5&&!playing){if(t>=M.S.N)t=0;setPlaying(true);}
+  downAt=null;ptrs.delete(e.pointerId);pinch0=0;};
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.dist=Math.min(70,Math.max(4,cam.dist*Math.exp(e.deltaY*0.001)));lastInteract=performance.now();},{passive:false});
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(canvas);resize();
+
+/* ---------- frame loop ---------- */
+const ease=f=>f<0.5?4*f*f*f:1-Math.pow(-2*f+2,3)/2;
+let last=performance.now();
+const mS=new THREE.Matrix4(),mR=new THREE.Matrix4(),mT=new THREE.Matrix4(),qq=new THREE.Quaternion(),origin=new THREE.Vector3();
+let autoGo=false;
+function tick(now){
+  if(!ACT['gnar_']){last=now;requestAnimationFrame(tick);return;}
+  if(ACT['gognar_']&&!autoGo){autoGo=true;if(!reduce&&!playing&&t<0.001)setPlaying(true);}
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  const S=M.S, D=S.D, NM=S.N;
+  if(playing){t+=dt*0.75;if(t>=NM){t=NM;setPlaying(false);}}
+  const n=Math.min(NM,Math.floor(t)), f=n>=NM?0:ease(t-n), n1=Math.min(NM,n+1);
+  // normalized view: current box centred, long edge = SIZE, step-0 orientation
+  const s=Math.exp((1-f)*Math.log(SIZE/M.A[n+D-1])+f*Math.log(SIZE/M.A[n1+D-1]));
+  const c=[0,1,2].map(a=>(1-f)*ctrs[n][a]+f*ctrs[n1][a]);
+  qq.copy(qs[n]);if(f>0)qq.slerp(qs[n1],f);
+  mR.makeRotationFromQuaternion(qq);mS.makeScale(s,s,s);mT.makeTranslation(-c[0],-c[1],-c[2]);
+  group.matrix.copy(orient).multiply(mR).multiply(mS).multiply(mT);group.matrixWorldNeedsUpdate=true;
+
+  if(D===3){
+    if(turn&&now-lastInteract>2500)cam.theta+=dt*0.14;
+    const sp=Math.sin(cam.phi);
+    camera.position.set(cam.dist*sp*Math.sin(cam.theta),cam.dist*Math.cos(cam.phi),cam.dist*sp*Math.cos(cam.theta));
+  }else camera.position.set(0,0,cam.dist);
+  camera.up.set(0,1,0);camera.lookAt(origin);
+  const fpx=canvas.clientHeight/(2*Math.tan(camera.fov*Math.PI/360)), dist=cam.dist;
+
+  items.forEach((it,k)=>{
+    const pc=it.pc;
+    const g=k<=n?1:(k===n+1?f:0);
+    if(g<=0.001){it.mesh.visible=false;return;}
+    const lo=pc.lo.slice(), hi=pc.hi.slice();
+    if(g<1){const Lg=(hi[pc.ax]-lo[pc.ax])*g;if(pc.dir>0)hi[pc.ax]=lo[pc.ax]+Lg;else lo[pc.ax]=hi[pc.ax]-Lg;}
+    const sz=[0,1,2].map(a=>hi[a]-lo[a]);
+    const px=Math.min(...sz.filter(v=>v>0))*s/dist*fpx;
+    if(px<0.4){it.mesh.visible=false;return;}
+    it.mesh.visible=true;
+    it.mesh.position.set((lo[0]+hi[0])/2,(lo[1]+hi[1])/2,(lo[2]+hi[2])/2);
+    it.mesh.scale.set(Math.max(sz[0],1e-3/s),Math.max(sz[1],1e-3/s),Math.max(sz[2],1e-3/s));
+    const w=0.5-0.5*Math.cos(2*Math.PI*k/(2*D));
+    it.mb.color.copy(col.fa).lerp(col.fb,w*0.85);
+    it.lm.opacity=0.55*Math.min(1,Math.max(0,(px-1.5)/8));
+  });
+  drawCharts(false);
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+load('nar');requestAnimationFrame(tick);
+})();
+
+(function(){
+const $=id=>document.getElementById(id);
+const S={D:4,r:root(4,3)};
+const DMAX=8;
+const sup=n=>String(n).replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+const pw=k=>k===0?'1':k===1?'r':'r'+sup(k);   // r to the power k (k ≥ 0)
+const f3=v=>v>=1e-3?(+v.toPrecision(3)).toString():v.toExponential(2);
+const f4=v=>v.toFixed(4);
+const PIS={'2-1':'φ','3-1':'ρ','3-2':'ψ','4-3':'θ₂','5-4':'ρ'};
+const KNOWN={'2-0':'√2 rectangle','2-1':'golden rectangle','3-0':'Delian brick','3-1':'plastic cuboid','3-2':'supergolden cuboid'};
+
+$('nd_dims').innerHTML=Array.from({length:DMAX-1},(_,i)=>`<button type="button" data-d="${i+2}">${i+2}</button>`).join('');
+$('nd_dims').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{S.D=+b.dataset.d;S.r=root(S.D,S.D-1);render();}));
+const setR=v=>{if(!isFinite(v))return;S.r=Math.min(10,Math.max(1,v));render();};
+$('nd_r').addEventListener('input',e=>setR(Math.pow(10,+e.target.value)));   // logarithmic slider
+$('nd_rnum').addEventListener('change',e=>setR(+e.target.value));
+
+// box (r, …, r^D) contains its copy (1, …, r^(D−1)); the gnomon has edges r, …, r^(D−1) and r^D − 1.
+// Returns k when r^D − 1 = r^k (k = 0: equals the copy's edge 1), i.e. when r^D = r^k + 1; otherwise −1.
+function match(D,r){const t=Math.pow(r,D)-1;for(let k=0;k<D;k++){const e=Math.pow(r,k);if(Math.abs(t-e)/e<0.004)return k;}return -1;}
+
+function bars(){
+  const {D,r}=S, W=640, H=480, L=118, R=70, T=26, B=18;
+  const rows=D+1, rh=Math.min(42,(H-T-B-14)/rows), bh=Math.max(8,rh*0.56);
+  const top=T+(H-T-B-14-rows*rh)/2;
+  const big=Math.pow(r,D), sx=v=>L+(W-L-R)*v/big;   // longest edge r^D spans the width
+  const t=big-1, m=match(D,r);
+  const y=i=>top+i*rh+(rh-bh)/2;
+  let s='';
+  s+=`<text class="nd-h" x="${L}" y="${T-8}">Box edges (r, r², …, ${pw(D)})</text>`;
+  // longest edge r^D = copy's 1 + gnomon's r^D − 1
+  const yl=y(0);
+  s+=`<text class="nd-l" x="${L-12}" y="${yl+bh/2+4}" text-anchor="end">${pw(D)}</text>`;
+  s+=`<rect class="nd-copy${m===0?' nd-hit':''}" x="${L}" y="${yl}" width="${Math.max(0.5,sx(1)-L)}" height="${bh}" rx="2"/>`;
+  s+=`<rect class="nd-gno" x="${sx(1)}" y="${yl}" width="${Math.max(0.5,sx(big)-sx(1))}" height="${bh}" rx="2"/>`;
+  s+=`<text class="nd-v" x="${sx(big)+6}" y="${yl+bh/2+4}">${f3(big)}</text>`;
+  if(sx(1)-L>46)s+=`<text class="nd-in" x="${(L+sx(1))/2}" y="${yl+bh/2+4}" text-anchor="middle">copy</text>`;
+  if(sx(big)-sx(1)>60)s+=`<text class="nd-in nd-in2" x="${(sx(1)+sx(big))/2}" y="${yl+bh/2+4}" text-anchor="middle">gnomon</text>`;
+  // the other edges r^(D−1) … r, shared by the box, the copy and the gnomon
+  for(let i=D-1;i>=1;i--){
+    const yy=y(D-i), v=Math.pow(r,i), hit=m===i;
+    s+=`<text class="nd-l" x="${L-12}" y="${yy+bh/2+4}" text-anchor="end">${pw(i)}</text>`;
+    s+=`<rect class="nd-bar${hit?' nd-hit':''}" x="${L}" y="${yy}" width="${Math.max(0.5,sx(v)-L)}" height="${bh}" rx="2"/>`;
+    s+=`<text class="nd-v" x="${sx(v)+6}" y="${yy+bh/2+4}">${f3(v)}</text>`;
+  }
+  // the gnomon's remaining edge, laid from zero, with a guide through all rows
+  const yg=y(D)+10;
+  s+=`<line class="nd-sep" x1="${L-100}" x2="${W-10}" y1="${yg-(rh-bh)/2-6}" y2="${yg-(rh-bh)/2-6}"/>`;
+  s+=`<text class="nd-l" x="${L-12}" y="${yg+bh/2+4}" text-anchor="end">${pw(D)} − 1</text>`;
+  s+=`<rect class="nd-gno" x="${L}" y="${yg}" width="${Math.max(0.5,sx(t)-L)}" height="${bh}" rx="2"/>`;
+  s+=`<text class="nd-v" x="${sx(t)+6}" y="${yg+bh/2+4}">${f3(t)}</text>`;
+  s+=`<line class="nd-guide${m>=0?' on':''}" x1="${sx(t)}" x2="${sx(t)}" y1="${top}" y2="${yg+bh}"/>`;
+  return s;
+}
+
+function render(){
+  const {D,r}=S, m=match(D,r), t=Math.pow(r,D)-1;
+  $('nd_r').value=Math.log(r)/Math.log(10);if(document.activeElement!==$('nd_rnum'))$('nd_rnum').value=f4(r);
+  $('nd_dims').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.d===D));
+  $('nd_bars').innerHTML=bars();
+  const sp=Array.from({length:D},(_,k)=>({k,r:root(D,k)}));
+  $('nd_chips').innerHTML=sp.map(s=>`<button type="button" class="chip${Math.abs(s.r-r)<1e-6?' active':''}" data-r="${s.r}">k = ${s.k}<span>r = ${f4(s.r)}</span></button>`).join('');
+  $('nd_chips').querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>setR(+b.dataset.r)));
+  const tup=a=>'('+a.slice().sort((p,q)=>p-q).map(f3).join(', ')+')';
+  $('nd_box').textContent=tup(Array.from({length:D},(_,i)=>Math.pow(r,i+1)));
+  $('nd_gno').textContent=tup(Array.from({length:D-1},(_,i)=>Math.pow(r,i+1)).concat([t]));
+  const key=D+'-'+m, name=KNOWN[key]?` (the ${KNOWN[key]})`:'', pis=PIS[key]?` This value of r is a Pisot number.`:'';
+  const E=`${pw(D)} − 1`;
+  let msg;
+  if(m===0){msg=`<b>k = 0${name}.</b> The gnomon’s edge ${E} equals 1, the copy’s edge, so the gnomon is identical to the copy. When cut in half, the box forms two identical, scaled-down copies of itself.`;}
+  else if(m>0){const e=pw(m);msg=`<b>k = ${m}${name}.</b> The gnomon’s edge ${E} equals ${e}, so the gnomon has square faces, ${e} × ${e}.${pis}`;}
+  else{let n=sp[0];sp.forEach(s=>{if(Math.abs(s.r-r)<Math.abs(n.r-r))n=s;});
+    msg=`<b>r = ${f4(r)}.</b> The gnomon’s edge ${E} = ${f3(t)} matches none of its other edges. Nearest special value: k = ${n.k}, r = ${f4(n.r)}.`;}
+  $('nd_status').innerHTML=msg;$('nd_status').classList.toggle('on',m>=0);
+}
+render();
+})();
+
+(function(){
+  const $=id=>document.getElementById(id), sl=$('ser_r'), nb=$('ser_rnum'), out=$('ser_out');
+  if(!sl)return;
+  let r=(1+Math.sqrt(5))/2;
+  const sup=s=>String(s).replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  // three significant figures; scientific notation from a million up
+  const fmt=v=>{if(v>=1e-3)return (+v.toPrecision(3)).toString();const [m,e]=v.toExponential(2).split('e-');return (+m).toString()+'\u00a0×\u00a010⁻'+sup(e);};   // non-breaking spaces keep each term on one line
+  function show(){
+    sl.value=Math.log(r)/Math.log(10);if(document.activeElement!==nb)nb.value=r.toFixed(4);
+    out.textContent=Array.from({length:20},(_,n)=>fmt(Math.pow(r,-n))).join(',  ')+',  …';
+  }
+  const set=v=>{if(!isFinite(v))return;r=Math.min(10,Math.max(1,v));show();};
+  sl.addEventListener('input',e=>set(Math.pow(10,+e.target.value)));   // logarithmic slider
+  nb.addEventListener('change',e=>set(+e.target.value));
+  show();
+})();
+
+(function(){
+  const watch=(sel,key)=>{const el=document.querySelector(sel);if(el)new IntersectionObserver(es=>{ACT[key]=es[0].isIntersecting;},{rootMargin:'120px'}).observe(el);};
+  watch('#ssr-rectangles .viewport','e2_');watch('#ssr-cuboids .viewport','e3_');
+  watch('#ssr-int-fib .viewport','gfib_');watch('#ssr-int-pad .viewport','gpad_');watch('#ssr-int-nar .viewport','gnar_');
+  const go=(sel,key)=>{const el=document.querySelector(sel);if(el)new IntersectionObserver(es=>{if(es[0].isIntersecting)ACT[key]=true;},{threshold:0.5}).observe(el);};
+  go('#ssr-int-fib .viewport','gogfib_');go('#ssr-int-pad .viewport','gogpad_');go('#ssr-int-nar .viewport','gognar_');
+})();
+
+})();
+
+</script>
+<script>
+/* When shown inside a frame, report the page height so the frame can fit it exactly. */
+(function(){if(window.parent===window)return;
+  var send=function(){parent.postMessage({ssrHeight:Math.ceil(document.documentElement.scrollHeight)},'*');};
+  if(window.ResizeObserver)new ResizeObserver(send).observe(document.body);
+  window.addEventListener('load',send);setTimeout(send,300);send();})();
+</script>
+</body>
+</html>
