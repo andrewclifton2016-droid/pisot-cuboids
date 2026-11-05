@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Self-Similar Rectangles and Cuboids</title>
-<meta name="description" content="How one geometric series builds the golden rectangle, A-series paper, the Delian brick, and their relatives in every dimension.">
+<title>Exponential Proportion Systems</title>
+<meta name="description" content="Interactive segments, rectangles, cuboids and higher boxes whose edges are consecutive powers of one ratio.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Spectral:ital,wght@0,500;0,600;1,500&display=swap">
 <style>
@@ -221,6 +221,35 @@ header{padding-bottom:34px}
 .sub h3{font-size:26px;color:var(--ink)}
 .sub p{color:var(--muted)}
 
+.od{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.od-top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.od-eq{margin:0;font-family:var(--f-display);font-size:20px;color:var(--ink)}
+.od-eq .v{font-family:var(--f-mono);font-size:14px;color:var(--accent)}
+.od-r{display:flex;align-items:baseline;gap:10px}
+.od-r input{width:100px}
+.od svg{display:block;width:100%;height:auto}
+.od svg text{font-family:var(--f-mono);font-size:12px;fill:var(--warm)}
+.od-g0{fill:var(--gno,#86aaea);stroke:var(--accent);stroke-opacity:.7}
+.od-g1{fill:var(--gno,#86aaea);fill-opacity:.55;stroke:var(--accent);stroke-opacity:.7}
+.od-hit{fill:var(--sq)}
+.od-lim{fill:var(--warm)}
+.od .serout{margin:0;font-size:12.5px}
+
+.sec{margin-top:36px;padding-top:30px}
+.secthead h2{font-size:clamp(26px,3vw,34px)}
+header{padding-bottom:10px}
+#ssr-line{border-top:0;margin-top:8px;padding-top:12px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;margin-top:10px}
+@media (max-width:880px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols h3{font-family:var(--f-display);font-weight:600;font-size:21px;color:var(--ink);margin:22px 0 8px}
+.cols h3:first-child{margin-top:0}
+.cols h4{font-family:var(--f-body);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:18px 0 6px}
+.cols p{color:var(--text2,var(--ink));line-height:1.65;margin:0 0 12px}
+.cols .eqbox{margin:18px 0 14px}
+.cols .notes{display:block;margin:0}
+.cols .notes .note1{max-width:none}
+.spec th:last-child{text-transform:none;font-style:italic}
+
 :root{--paper:#12181a; --sheet:#192124; --ink:#e2e9e7; --muted:#93a2a2; --rule:#2c393c;
   --accent:#86b4ff; --sq:#3f6fc2; --fill-a:#2a3437; --fill-b:#54666a; --chip:#1f2e45; --warm:#e08a5f; color-scheme:dark;--sq:#e2b93b;--warm:#ff8f87;--gno:#3d6bb8;--muted:#a3b1b1;--text2:#c6d0ce;--panel:#1b2427;--sheet:#172023}
 html,body{margin:0;padding:0;background:var(--paper);color:var(--ink)}
@@ -234,41 +263,26 @@ img,canvas,svg{max-width:100%}
 <div class="ssr">
 <div class="wrap">
   <header>
-    <h1>Self-Similar Rectangles and Cuboids</h1>
-    <p class="tag">How one geometric series builds the golden rectangle, A-series paper, the Delian brick, and their relatives in every dimension.</p>
+    <h1>Exponential Proportion Systems</h1>
   </header>
 
-  <section class="math" aria-labelledby="ssr-introH">
-    <div>
-      <h2 id="ssr-introH">Introduction</h2>
-      <p>A golden rectangle loses a square and leaves a smaller golden rectangle. A sheet of A4 paper folds into two smaller sheets of the same shape. Both belong to one family, which continues into three dimensions and beyond.</p>
-      <p>Every member is built from the geometric sequence <span class="m">1, r, r², r³, …</span> with common ratio <i>r</i> &gt; 1. A rectangle has sides in proportion <span class="m">1 : r</span>, a box has edges in proportion <span class="m">1 : r : r²</span>, and a <i>D</i>-dimensional box has edges <span class="m">1 : r : … : r<sup>D−1</sup></span>. The box <span class="m">(r, r², r³)</span> contains a copy of itself scaled by <span class="m">1/r</span>, the box <span class="m">(1, r, r²)</span>, and the piece left over is the <i>gnomon</i>. The copy contains its own copy, and so on: the nested boxes shrink by <span class="m">1/r</span> at each step, and the gnomons between them spiral toward one point along a logarithmic spiral.</p>
-      <p>Consecutive terms of the sequence give the edges of the nested boxes, not of the gnomons. The gnomon between <span class="m">(r, …, r<sup>D</sup>)</span> and its copy <span class="m">(1, …, r<sup>D−1</sup>)</span> has edges <span class="m">r, …, r<sup>D−1</sup></span> and <span class="m">r<sup>D</sup> − 1</span>, and that last edge is generally not a term of the sequence (with <i>r</i> = 1.3 in 2D it is 0.69). The special shapes are exactly the values of <i>r</i> where it is: <span class="m">r<sup>D</sup> − 1 = r<sup>k</sup></span>, which is the equation <span class="m">r<sup>D</sup> = r<sup>k</sup> + 1</span>. The sections below cover rectangles, cuboids and higher dimensions, then build integer approximations of three of the special shapes.</p>
-      <div class="serdemo">
-        <div class="xrow"><label class="label" for="ser_r">Try a value of r: the scale of each nested box, shrinking by 1/r per step</label><input id="ser_rnum" type="number" step="0.0001" min="1" max="10" aria-label="Common ratio r"></div>
-        <input id="ser_r" type="range" min="0" max="1" step="0.0001" aria-label="Common ratio r (logarithmic scale)">
-        <p class="serout" id="ser_out" aria-live="polite"></p>
+  <section class="block sec" id="ssr-line" aria-labelledby="ssr-h1">
+    <div class="secthead"><p class="eyebrow">Section 1 · One dimension</p><h2 id="ssr-h1">Segments</h2></div>
+    <div class="od">
+      <div class="od-top">
+        <p class="od-eq" id="od_eq"></p>
+        <div class="od-r"><label class="xbig" for="ser_r">r</label><input id="ser_rnum" type="number" step="0.0001" min="1" max="10" aria-label="Common ratio r"></div>
       </div>
+      <input id="ser_r" type="range" min="0" max="1" step="0.0001" aria-label="Common ratio r (logarithmic scale)">
+      <svg id="od_svg" viewBox="0 0 640 44" role="img" aria-label="A segment of length r divided into gnomons that shrink by 1/r toward 0"></svg>
+      <p class="serout" id="ser_out" aria-live="polite"></p>
     </div>
-    <div>
-      <div class="eqbox">r<sup>D</sup> = r<sup>k</sup> + 1<small>D = dimension · k = 0, 1, …, D − 1</small><small class="alt">The box’s longest edge, r<sup>D</sup>, splits into the copy’s edge, 1, and the gnomon’s edge, r<sup>D</sup> − 1. The shape is special when r<sup>D</sup> − 1 = r<sup>k</sup>.</small></div>
-      <div class="keys">
-        <div><b>k = 0</b><span>The gnomon’s edge equals the copy’s edge, 1, so the gnomon is identical to the copy: one cut bisects the box into two identical, scaled-down copies.</span></div>
-        <div><b>k ≥ 1</b><span>The gnomon’s edge equals one of its other edges, r<sup>k</sup>, so the gnomon has square faces.</span></div>
-      </div>
-      <table class="spec"><thead><tr><th>Shape</th><th>Equation</th><th>r</th></tr></thead><tbody>
-        <tr><td>√2 rectangle</td><td class="n">r² = 2</td><td class="n">√2 ≈ 1.4142</td></tr>
-        <tr><td>Golden rectangle</td><td class="n">r² = r + 1</td><td class="n">φ ≈ 1.6180</td></tr>
-        <tr class="g"><td>Delian brick</td><td class="n">r³ = 2</td><td class="n">∛2 ≈ 1.2599</td></tr>
-        <tr><td>Plastic cuboid</td><td class="n">r³ = r + 1</td><td class="n">ρ ≈ 1.3247</td></tr>
-        <tr><td>Supergolden cuboid</td><td class="n">r³ = r² + 1</td><td class="n">ψ ≈ 1.4656</td></tr>
-      </tbody></table>
-    </div>
+
   </section>
 
-  <section class="block sec" id="ssr-rectangles" aria-labelledby="ssr-h1">
-    <div class="secthead"><p class="eyebrow">Section 1 · Two dimensions</p><h2 id="ssr-h1">Rectangles</h2>
-      <p>Rectangles with sides in proportion <span class="m">1 : r</span>. Drag <i>r</i>, or select the √2 rectangle or the golden rectangle.</p></div>
+  <section class="block sec" id="ssr-rectangles" aria-labelledby="ssr-h2">
+    <div class="secthead"><p class="eyebrow">Section 2 · Two dimensions</p><h2 id="ssr-h2">Rectangles</h2>
+      <p>Proportion <span class="m">1 : r</span>. Drag <i>r</i>, or select a special value.</p></div>
 <section class="stage">
     <div class="viewport">
       <canvas id="e2_view" aria-label="3D model of the subdivided cuboid"></canvas>
@@ -323,9 +337,9 @@ img,canvas,svg{max-width:100%}
   </section>
   </section>
 
-  <section class="block sec" id="ssr-cuboids" aria-labelledby="ssr-h2">
-    <div class="secthead"><p class="eyebrow">Section 2 · Three dimensions</p><h2 id="ssr-h2">Cuboids</h2>
-      <p>Boxes with edges in proportion <span class="m">1 : r : r²</span>. Drag <i>r</i>, or select the Delian brick, the plastic cuboid, the supergolden cuboid or the √2 cuboid.</p></div>
+  <section class="block sec" id="ssr-cuboids" aria-labelledby="ssr-h3">
+    <div class="secthead"><p class="eyebrow">Section 3 · Three dimensions</p><h2 id="ssr-h3">Cuboids</h2>
+      <p>Proportion <span class="m">1 : r : r²</span>. Drag <i>r</i>, or select a special value.</p></div>
 <section class="stage">
     <div class="viewport">
       <canvas id="e3_view" aria-label="3D model of the subdivided cuboid"></canvas>
@@ -378,12 +392,11 @@ img,canvas,svg{max-width:100%}
       </dl>
     </aside>
   </section>
-    <p class="explain"><b>How it works.</b> The box <span class="m">r × r² × r³</span> contains its copy, <span class="m">1 × r × r²</span>, on their shared <span class="m">r × r²</span> face. What remains is the gnomon, <span class="m">r × r² × (r³ − 1)</span>. The same cut repeats inside the copy, turned 120° each time, so the gnomons spiral into one corner. The gnomon is special when <span class="m">r³ − 1</span> matches another edge: it equals 1 for the Delian brick (so the gnomon is a second copy), <i>r</i> for the plastic cuboid and <i>r²</i> for the supergolden cuboid. Turn on the spiral to trace one of the four conical spirals that together pass through every vertex.</p>
   </section>
 
-  <section class="block sec" id="ssr-nd" aria-labelledby="ssr-h3">
-    <div class="secthead"><p class="eyebrow">Section 3 · Any dimension</p><h2 id="ssr-h3">N-dimensional cuboids</h2>
-      <p class="lead">A <i>D</i>-dimensional box with edges <span class="m">(r, r², …, r<sup>D</sup>)</span> contains its copy, scaled by <span class="m">1/r</span>, with edges <span class="m">(1, r, …, r<sup>D−1</sup>)</span>. They share the <span class="m">D − 1</span> edges <span class="m">r, …, r<sup>D−1</sup></span>, all of different lengths. Along the longest edge, <span class="m">r<sup>D</sup></span>, the copy takes 1 and the gnomon takes <span class="m">r<sup>D</sup> − 1</span>, so the gnomon’s edges are <span class="m">r, …, r<sup>D−1</sup></span> and <span class="m">r<sup>D</sup> − 1</span>. The gnomon is special exactly when <span class="m">r<sup>D</sup> − 1 = r<sup>k</sup></span> for some <span class="m">k = 0, 1, …, D − 1</span>: for <span class="m">k = 0</span> the edge matches the copy’s edge, 1, and for <span class="m">k ≥ 1</span> it matches one of the gnomon’s own edges. This is the equation <span class="m">r<sup>D</sup> = r<sup>k</sup> + 1</span>. The expression <span class="m">r<sup>D</sup> − r<sup>k</sup> − 1</span> equals −1 at <i>r</i> = 1 and increases for <i>r</i> &gt; 1, so each equation has exactly one root above 1, and every dimension has exactly <i>D</i> special values. As <i>D</i> grows they crowd toward 1, so the special boxes approach a cube. Only φ, ρ, ψ and θ₂ ≈ 1.3803 (in 4D) are Pisot numbers, with ρ appearing again in 5D; no other dimension up to 40 has one.</p></div>
+  <section class="block sec" id="ssr-nd" aria-labelledby="ssr-h4">
+    <div class="secthead"><p class="eyebrow">Section 4 · Any dimension</p><h2 id="ssr-h4">N-dimensional boxes</h2>
+      <p>Edge lengths of the box <span class="m">(r, …, r<sup>D</sup>)</span>, its copy and the gnomon.</p></div>
     <div class="stage nd">
       <div class="viewport ndv">
         <svg id="nd_bars" viewBox="0 0 640 480" role="img" aria-label="Edge lengths of the box, the copy and the gnomon"></svg>
@@ -408,9 +421,9 @@ img,canvas,svg{max-width:100%}
 
   </section>
 
-  <section class="block sec" id="ssr-integer" aria-labelledby="ssr-h4">
-    <div class="secthead"><p class="eyebrow">Section 4 · Whole numbers</p><h2 id="ssr-h4">Integer approximations</h2>
-      <p>Integer sequences that follow the same equations build whole-number versions of three special shapes. Each added piece has exactly square faces, and the shapes converge to the exact ones because φ, ρ and ψ are Pisot numbers. Each animation starts when it scrolls into view; press Play or click the model to run it again.</p></div>
+  <section class="block sec" id="ssr-integer" aria-labelledby="ssr-h5">
+    <div class="secthead"><p class="eyebrow">Section 5 · Whole numbers</p><h2 id="ssr-h5">Integer approximations</h2>
+      <p>Each animation starts when it scrolls into view; press Play or click the model to run it again.</p></div>
     <div class="block int" id="ssr-int-fib">
       <div class="sub"><h3>Fibonacci tiling <span>→ golden rectangle</span></h3><p id="gfib_lede"></p></div>
 <section class="stage">
@@ -460,7 +473,6 @@ img,canvas,svg{max-width:100%}
       <svg id="gfib_c2" viewBox="0 0 600 230" role="img" aria-label="Edge error shrinking geometrically"></svg>
     </div>
   </section>
-<section class="notes" id="gfib_notes"></section>
     </div>
     <div class="block int" id="ssr-int-pad">
       <div class="sub"><h3>Padovan cuboid spiral <span>→ plastic cuboid</span></h3><p id="gpad_lede"></p></div>
@@ -511,7 +523,6 @@ img,canvas,svg{max-width:100%}
       <svg id="gpad_c2" viewBox="0 0 600 230" role="img" aria-label="Edge error shrinking geometrically"></svg>
     </div>
   </section>
-<section class="notes" id="gpad_notes"></section>
     </div>
     <div class="block int" id="ssr-int-nar">
       <div class="sub"><h3>Narayana cuboid spiral <span>→ supergolden cuboid</span></h3><p id="gnar_lede"></p></div>
@@ -562,7 +573,49 @@ img,canvas,svg{max-width:100%}
       <svg id="gnar_c2" viewBox="0 0 600 230" role="img" aria-label="Edge error shrinking geometrically"></svg>
     </div>
   </section>
-<section class="notes" id="gnar_notes"></section>
+    </div>
+  </section>
+
+  <section class="block sec" id="ssr-notes" aria-labelledby="ssr-h6">
+    <div class="secthead"><p class="eyebrow">Section 6 · Explanation</p><h2 id="ssr-h6">How the systems work</h2></div>
+    <div class="cols">
+    <div>
+      <h3>The family</h3>
+      <p>Every member is built from the geometric sequence <span class="m">1, r, r², r³, …</span> with common ratio <i>r</i> &gt; 1. A segment has length <span class="m">r</span>, a rectangle has sides in proportion <span class="m">1 : r</span>, a box has edges in proportion <span class="m">1 : r : r²</span>, and a <i>D</i>-dimensional box has edges <span class="m">1 : r : … : r<sup>D−1</sup></span>. The box <span class="m">(r, …, r<sup>D</sup>)</span> contains a copy of itself scaled by <span class="m">1/r</span>, the box <span class="m">(1, …, r<sup>D−1</sup>)</span>, and the piece left over is the <i>gnomon</i>. The copy contains its own copy, and so on: the nested boxes shrink by <span class="m">1/r</span> at each step, and the gnomons between them spiral toward one point.</p>
+      <p>Consecutive terms of the sequence give the edges of the nested boxes, not of the gnomons. The gnomon has edges <span class="m">r, …, r<sup>D−1</sup></span> and <span class="m">r<sup>D</sup> − 1</span>, and that last edge is generally not a term of the sequence (with <i>r</i> = 1.3 in 2D it is 0.69). The special shapes are the values of <i>r</i> where it is: <span class="m">r<sup>D</sup> − 1 = r<sup>k</sup></span>, which is the equation <span class="m">r<sup>D</sup> = r<sup>k</sup> + 1</span>.</p>
+      <div class="eqbox">r<sup>D</sup> = r<sup>k</sup> + 1<small>D = dimension · k = 0, 1, …, D − 1</small></div>
+      <div class="keys">
+        <div><b>k = 0</b><span>The gnomon’s edge equals the copy’s edge, 1, so the gnomon is identical to the copy: one cut bisects the box into two identical, scaled-down copies.</span></div>
+        <div><b>k ≥ 1</b><span>The gnomon’s edge equals one of its other edges, r<sup>k</sup>, so the gnomon has square faces.</span></div>
+      </div>
+      <table class="spec"><thead><tr><th>Shape</th><th>Equation</th><th>r</th></tr></thead><tbody>
+        <tr><td>Halved segment</td><td class="n">r = 2</td><td class="n">2</td></tr>
+        <tr class="g"><td>√2 rectangle</td><td class="n">r² = 2</td><td class="n">√2 ≈ 1.4142</td></tr>
+        <tr><td>Golden rectangle</td><td class="n">r² = r + 1</td><td class="n">φ ≈ 1.6180</td></tr>
+        <tr><td>Silver rectangle</td><td class="n">r² = 2r + 1</td><td class="n">δ ≈ 2.4142</td></tr>
+        <tr class="g"><td>Delian brick</td><td class="n">r³ = 2</td><td class="n">∛2 ≈ 1.2599</td></tr>
+        <tr><td>Plastic cuboid</td><td class="n">r³ = r + 1</td><td class="n">ρ ≈ 1.3247</td></tr>
+        <tr><td>Supergolden cuboid</td><td class="n">r³ = r² + 1</td><td class="n">ψ ≈ 1.4656</td></tr>
+      </tbody></table>
+    </div>
+    <div>
+      <h3>One dimension</h3>
+      <p>The segment of length <span class="m">r</span> contains its copy, of length 1, and the gnomon is the remaining piece, of length <span class="m">r − 1</span>. Every value of <i>r</i> gives a self-similar segment, and the gnomons have lengths <span class="m">(r − 1), (r − 1)/r, (r − 1)/r², …</span>, which sum to <span class="m">r</span>. The only special value is <span class="m">r = 2</span> (<span class="m">k = 0</span>), where the gnomon equals the copy and the segment halves.</p>
+      <h3>Two dimensions</h3>
+      <p>The rectangle <span class="m">r × r²</span> contains its copy, <span class="m">1 × r</span>, and the gnomon <span class="m">r × (r² − 1)</span>. For <span class="m">r = √2</span> the gnomon is a second copy, so one cut halves the sheet, as with A-series paper. For <span class="m">r = φ</span> the gnomon is the square <span class="m">r × r</span>. The silver ratio, <span class="m">δ = 1 + √2</span>, satisfies <span class="m">r² = 2r + 1</span> instead: the gnomon is <span class="m">r × 2r</span>, exactly two <span class="m">r × r</span> squares, so the silver rectangle loses two squares and leaves a smaller copy. It lies outside the equation <span class="m">r<sup>D</sup> = r<sup>k</sup> + 1</span> because its gnomon is made of two square-faced pieces rather than one. Like φ, δ is a Pisot number, and its integer version uses the Pell numbers 1, 2, 5, 12, 29, ….</p>
+      <h3>Three dimensions</h3>
+      <p>The box <span class="m">r × r² × r³</span> contains its copy, <span class="m">1 × r × r²</span>, on their shared <span class="m">r × r²</span> face. What remains is the gnomon, <span class="m">r × r² × (r³ − 1)</span>. The same cut repeats inside the copy, turned 120° each time, so the gnomons spiral into one corner. The gnomon is special when <span class="m">r³ − 1</span> matches another edge: it equals 1 for the Delian brick (so the gnomon is a second copy), <i>r</i> for the plastic cuboid and <i>r²</i> for the supergolden cuboid. Four conical spirals together pass through every vertex.</p>
+      <h3>Any dimension</h3>
+      <p>The box <span class="m">(r, …, r<sup>D</sup>)</span> and its copy <span class="m">(1, …, r<sup>D−1</sup>)</span> share the <span class="m">D − 1</span> edges <span class="m">r, …, r<sup>D−1</sup></span>. Along the longest edge, <span class="m">r<sup>D</sup></span>, the copy takes 1 and the gnomon takes <span class="m">r<sup>D</sup> − 1</span>. The expression <span class="m">r<sup>D</sup> − r<sup>k</sup> − 1</span> equals −1 at <i>r</i> = 1 and increases for <i>r</i> &gt; 1, so each equation has exactly one root above 1, and every dimension has exactly <i>D</i> special values. As <i>D</i> grows they crowd toward 1, so the special boxes approach a cube. Only φ, ρ, ψ and θ₂ ≈ 1.3803 (in 4D) are Pisot numbers, with ρ appearing again in 5D; no other dimension up to 40 has one.</p>
+      <h3>Whole numbers</h3>
+      <p>Integer sequences that follow the same equations build whole-number versions of the special shapes. Each added piece has exactly square faces, and the shapes converge to the exact ones because φ, ρ and ψ are Pisot numbers.</p>
+      <h4>Fibonacci</h4>
+      <section class="notes" id="gfib_notes"></section>
+      <h4>Padovan</h4>
+      <section class="notes" id="gpad_notes"></section>
+      <h4>Narayana</h4>
+      <section class="notes" id="gnar_notes"></section>
+    </div>
     </div>
   </section>
   <footer class="foot"><p>Copyright &copy; 2026 Andrew Clifton</p></footer>
@@ -571,10 +624,10 @@ img,canvas,svg{max-width:100%}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-/* Self-Similar Rectangles and Cuboids. Requires three.js r128 (window.THREE). */
+/* Exponential Proportion Systems. Requires three.js r128 (window.THREE). */
 (function(){
 "use strict";
-if(typeof THREE==="undefined"){console.warn("Self-Similar Rectangles and Cuboids: three.js not found");}
+if(typeof THREE==="undefined"){console.warn("Exponential Proportion Systems: three.js not found");}
 const ACT={};
 
 function root(D,k){let lo=1,hi=2.2;for(let i=0;i<100;i++){const m=(lo+hi)/2;(Math.pow(m,D)-Math.pow(m,k)-1>0)?hi=m:lo=m;}return (lo+hi)/2;}
@@ -765,7 +818,11 @@ for(let i=0;i<POOL;i++){
   const lm=new THREE.LineBasicMaterial({transparent:true});
   mesh.add(new THREE.LineSegments(unitE,lm));
   mesh.visible=false;group.add(mesh);
-  items.push({mesh,mb,ms,base,byAxis,lm});
+  // silver ratio (2D): each gnomon is two squares, split across the middle of its long side
+  const midV=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-0.5,0),new THREE.Vector3(0,0.5,0)]),lm);
+  const midH=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.5,0,0),new THREE.Vector3(0.5,0,0)]),lm);
+  midV.visible=midH.visible=false;mesh.add(midV);mesh.add(midH);
+  items.push({mesh,mb,ms,base,byAxis,lm,midV,midH});
 }
 const limitMat=new THREE.LineBasicMaterial();
 const limitLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3,0,0),new THREE.Vector3(3,0,0)]),limitMat);
@@ -808,6 +865,8 @@ let G=null, Pv=new THREE.Vector3(), Ax=new THREE.Vector3();
 function build(){
   const ax=Math.abs(state.x), line=!isFinite(state.x)||state.x===0, deg=!line&&ax<XDEG&&ax>1/XDEG;
   G=modelSigned(state.D,line?50:deg?XDEG:state.x,state.explode,POOL);G.deg=deg;G.line=line;
+  // silver ratio δ = 1 + √2: r² = 2r + 1, so the gnomon's edge r² − 1 is exactly twice its other edge, r
+  G.silver=state.D===2&&!deg&&!line&&Math.abs(G.r*G.r-1-2*G.r)/(2*G.r)<0.004;
   Pv.set(...G.p);Ax.set(...G.axis);
   const e=G.e, p=G.p;
   // core: the undivided remainder (or the whole cube at r = 1)
@@ -823,7 +882,8 @@ function build(){
     const pc=G.pieces[i], c=pc.c;
     it.mesh.position.set(c[0]+e*(c[0]-p[0]),c[1]+e*(c[1]-p[1]),c[2]+e*(c[2]-p[2]));
     it.mesh.scale.set(Math.max(pc.hi[0]-pc.lo[0],1e-3),Math.max(pc.hi[1]-pc.lo[1],1e-3),Math.max(pc.hi[2]-pc.lo[2],1e-3));
-    it.mesh.material=pc.sqA>=0?it.byAxis[pc.sqA]:it.base;
+    it.mesh.material=G.silver?it.byAxis[2]:pc.sqA>=0?it.byAxis[pc.sqA]:it.base;
+    const sx=pc.hi[0]-pc.lo[0], sy=pc.hi[1]-pc.lo[1];it.midV.visible=G.silver&&sx>sy;it.midH.visible=G.silver&&sy>sx;
   });
   // fixed order: spiral 1 is the one that stays most inside the shape from r ≈ 1.24 upward (every special value);
   // keeping the order fixed means each numbered spiral is the same spiral at every r, so nothing jumps
@@ -857,8 +917,9 @@ function renderControls(){
   const sp=specials(state.D);
   const scale=state.anyR?[[-Infinity,'−∞'],[-2,'−2'],[-1,'−1'],[0,'0'],[1,'1'],[2,'2'],[Infinity,'∞']]:[[1,'1'],[2,'2'],[4,'4'],[8,'8'],[16,'16'],[Infinity,'∞']];
   $('e2_ticks').innerHTML=scale.map(([v,l])=>`<span class="tick sc" style="left:calc(9px + ${toPos(v)} * (100% - 18px));top:0">${l}</span>`).join('')
-    +sp.map((s,i)=>`<span class="tick" style="left:calc(9px + ${toPos(s.x)} * (100% - 18px));top:${i%2?16:0}px">${s.tick}</span>`).join('');
-  const extra=state.D===3?[{name:'√2 cuboid',x:Math.SQRT2}]:[];
+    +sp.map((s,i)=>`<span class="tick" style="left:calc(9px + ${toPos(s.x)} * (100% - 18px));top:${i%2?16:0}px">${s.tick}</span>`).join('')
+    +(state.D===2?`<span class="tick" style="left:calc(9px + ${toPos(1+Math.SQRT2)} * (100% - 18px));top:0">δ</span>`:'');
+  const extra=state.D===3?[{name:'√2 cuboid',x:Math.SQRT2}]:[{name:'Silver rectangle',x:1+Math.SQRT2}];
   const negs=state.anyR?sp.map(q=>({name:'−'+q.tick,x:-q.x})).concat([{name:'1/'+sp[sp.length-1].tick,x:1/sp[sp.length-1].x},{name:'0',x:0}]):[];
   $('e2_chips').innerHTML=sp.concat(extra).concat(negs).map(s=>`<button class="chip" data-x="${s.x}">${s.name}<span>r = ${f4(s.x)}</span></button>`).join('');
   $('e2_chips').querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>setX(+b.dataset.x)));
@@ -916,12 +977,14 @@ function updateReadouts(nc){
     st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':near.name+'.'}</b> ${note}${note?'Its proportions are those of the '+near.name.toLowerCase()+'. ':''}When cut in half, it forms two identical, scaled-down copies of itself. This remains true no matter how many times it is bisected.`;
   }else if(match>=1){
     st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':near.name+'.'}</b> ${note}${note?'Its proportions are those of the '+near.name.toLowerCase()+'. ':''}${SQ[D+'-'+match]} This remains true no matter how many times it is repeated.`;
+  }else if(G.silver){
+    st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':'Silver rectangle.'}</b> ${note}${note?'Its proportions are those of the silver rectangle. ':''}Removing two δ × δ squares from the δ × δ² rectangle leaves a smaller copy of it. This remains true no matter how many times it is repeated.`;
   }else{
     st.innerHTML=`<b>r = ${fmtR(x)}.</b> ${note}Removing the gnomon leaves a smaller copy of the original ${noun}, but the gnomon has no square faces. Nearest special value: ${near.name}, r = ${f4(near.x)}.`;
   }
-  st.classList.toggle('on',match>=0);
-  pill.textContent=match>=0&&!note?`${near.name} · ${near.eq}`:`r = ${fmtR(x)}`;
-  pill.classList.toggle('on',match>=0);
+  st.classList.toggle('on',match>=0||G.silver);
+  pill.textContent=G.silver&&!note?'Silver rectangle · r² = 2r + 1':match>=0&&!note?`${near.name} · ${near.eq}`:`r = ${fmtR(x)}`;
+  pill.classList.toggle('on',match>=0||G.silver);
   $('e2_chips').querySelectorAll('.chip').forEach(b=>b.classList.toggle('active',Math.abs(+b.dataset.x-x)<1e-6));
 }
 function setX(v){if(Number.isNaN(v))return;
@@ -1088,7 +1151,11 @@ for(let i=0;i<POOL;i++){
   const lm=new THREE.LineBasicMaterial({transparent:true});
   mesh.add(new THREE.LineSegments(unitE,lm));
   mesh.visible=false;group.add(mesh);
-  items.push({mesh,mb,ms,base,byAxis,lm});
+  // silver ratio (2D): each gnomon is two squares, split across the middle of its long side
+  const midV=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-0.5,0),new THREE.Vector3(0,0.5,0)]),lm);
+  const midH=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.5,0,0),new THREE.Vector3(0.5,0,0)]),lm);
+  midV.visible=midH.visible=false;mesh.add(midV);mesh.add(midH);
+  items.push({mesh,mb,ms,base,byAxis,lm,midV,midH});
 }
 const limitMat=new THREE.LineBasicMaterial();
 const limitLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3,0,0),new THREE.Vector3(3,0,0)]),limitMat);
@@ -1131,6 +1198,8 @@ let G=null, Pv=new THREE.Vector3(), Ax=new THREE.Vector3();
 function build(){
   const ax=Math.abs(state.x), line=!isFinite(state.x)||state.x===0, deg=!line&&ax<XDEG&&ax>1/XDEG;
   G=modelSigned(state.D,line?50:deg?XDEG:state.x,state.explode,POOL);G.deg=deg;G.line=line;
+  // silver ratio δ = 1 + √2: r² = 2r + 1, so the gnomon's edge r² − 1 is exactly twice its other edge, r
+  G.silver=state.D===2&&!deg&&!line&&Math.abs(G.r*G.r-1-2*G.r)/(2*G.r)<0.004;
   Pv.set(...G.p);Ax.set(...G.axis);
   const e=G.e, p=G.p;
   // core: the undivided remainder (or the whole cube at r = 1)
@@ -1146,7 +1215,8 @@ function build(){
     const pc=G.pieces[i], c=pc.c;
     it.mesh.position.set(c[0]+e*(c[0]-p[0]),c[1]+e*(c[1]-p[1]),c[2]+e*(c[2]-p[2]));
     it.mesh.scale.set(Math.max(pc.hi[0]-pc.lo[0],1e-3),Math.max(pc.hi[1]-pc.lo[1],1e-3),Math.max(pc.hi[2]-pc.lo[2],1e-3));
-    it.mesh.material=pc.sqA>=0?it.byAxis[pc.sqA]:it.base;
+    it.mesh.material=G.silver?it.byAxis[2]:pc.sqA>=0?it.byAxis[pc.sqA]:it.base;
+    const sx=pc.hi[0]-pc.lo[0], sy=pc.hi[1]-pc.lo[1];it.midV.visible=G.silver&&sx>sy;it.midH.visible=G.silver&&sy>sx;
   });
   // fixed order: spiral 1 is the one that stays most inside the shape from r ≈ 1.24 upward (every special value);
   // keeping the order fixed means each numbered spiral is the same spiral at every r, so nothing jumps
@@ -1180,8 +1250,9 @@ function renderControls(){
   const sp=specials(state.D);
   const scale=state.anyR?[[-Infinity,'−∞'],[-2,'−2'],[-1,'−1'],[0,'0'],[1,'1'],[2,'2'],[Infinity,'∞']]:[[1,'1'],[2,'2'],[4,'4'],[8,'8'],[16,'16'],[Infinity,'∞']];
   $('e3_ticks').innerHTML=scale.map(([v,l])=>`<span class="tick sc" style="left:calc(9px + ${toPos(v)} * (100% - 18px));top:0">${l}</span>`).join('')
-    +sp.map((s,i)=>`<span class="tick" style="left:calc(9px + ${toPos(s.x)} * (100% - 18px));top:${i%2?16:0}px">${s.tick}</span>`).join('');
-  const extra=state.D===3?[{name:'√2 cuboid',x:Math.SQRT2}]:[];
+    +sp.map((s,i)=>`<span class="tick" style="left:calc(9px + ${toPos(s.x)} * (100% - 18px));top:${i%2?16:0}px">${s.tick}</span>`).join('')
+    +(state.D===2?`<span class="tick" style="left:calc(9px + ${toPos(1+Math.SQRT2)} * (100% - 18px));top:0">δ</span>`:'');
+  const extra=state.D===3?[{name:'√2 cuboid',x:Math.SQRT2}]:[{name:'Silver rectangle',x:1+Math.SQRT2}];
   const negs=state.anyR?sp.map(q=>({name:'−'+q.tick,x:-q.x})).concat([{name:'1/'+sp[sp.length-1].tick,x:1/sp[sp.length-1].x},{name:'0',x:0}]):[];
   $('e3_chips').innerHTML=sp.concat(extra).concat(negs).map(s=>`<button class="chip" data-x="${s.x}">${s.name}<span>r = ${f4(s.x)}</span></button>`).join('');
   $('e3_chips').querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>setX(+b.dataset.x)));
@@ -1239,12 +1310,14 @@ function updateReadouts(nc){
     st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':near.name+'.'}</b> ${note}${note?'Its proportions are those of the '+near.name.toLowerCase()+'. ':''}When cut in half, it forms two identical, scaled-down copies of itself. This remains true no matter how many times it is bisected.`;
   }else if(match>=1){
     st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':near.name+'.'}</b> ${note}${note?'Its proportions are those of the '+near.name.toLowerCase()+'. ':''}${SQ[D+'-'+match]} This remains true no matter how many times it is repeated.`;
+  }else if(G.silver){
+    st.innerHTML=`<b>${note?'r = '+fmtR(x)+'.':'Silver rectangle.'}</b> ${note}${note?'Its proportions are those of the silver rectangle. ':''}Removing two δ × δ squares from the δ × δ² rectangle leaves a smaller copy of it. This remains true no matter how many times it is repeated.`;
   }else{
     st.innerHTML=`<b>r = ${fmtR(x)}.</b> ${note}Removing the gnomon leaves a smaller copy of the original ${noun}, but the gnomon has no square faces. Nearest special value: ${near.name}, r = ${f4(near.x)}.`;
   }
-  st.classList.toggle('on',match>=0);
-  pill.textContent=match>=0&&!note?`${near.name} · ${near.eq}`:`r = ${fmtR(x)}`;
-  pill.classList.toggle('on',match>=0);
+  st.classList.toggle('on',match>=0||G.silver);
+  pill.textContent=G.silver&&!note?'Silver rectangle · r² = 2r + 1':match>=0&&!note?`${near.name} · ${near.eq}`:`r = ${fmtR(x)}`;
+  pill.classList.toggle('on',match>=0||G.silver);
   $('e3_chips').querySelectorAll('.chip').forEach(b=>b.classList.toggle('active',Math.abs(+b.dataset.x-x)<1e-6));
 }
 function setX(v){if(Number.isNaN(v))return;
@@ -2080,18 +2153,28 @@ render();
 })();
 
 (function(){
-  const $=id=>document.getElementById(id), sl=$('ser_r'), nb=$('ser_rnum'), out=$('ser_out');
-  if(!sl)return;
+  const $=id=>document.getElementById(id), sl=$('ser_r'), nb=$('ser_rnum'), out=$('ser_out'), svg=$('od_svg'), eq=$('od_eq');
+  if(!sl||!svg)return;
   let r=(1+Math.sqrt(5))/2;
   const sup=s=>String(s).replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
-  // three significant figures; scientific notation from a million up
-  const fmt=v=>{if(v>=1e-3)return (+v.toPrecision(3)).toString();const [m,e]=v.toExponential(2).split('e-');return (+m).toString()+'\u00a0×\u00a010⁻'+sup(e);};   // non-breaking spaces keep each term on one line
+  const fmt=v=>{if(v>=1e-3)return (+v.toPrecision(3)).toString();const [m,e]=v.toExponential(2).split('e-');return (+m).toString()+' × 10⁻'+sup(e);};
+  function draw(){
+    const W=640, L=22, R=4, y=6, h=32, x=v=>L+(W-L-R)*v/r, half=Math.abs(r-2)<0.004;
+    let s='';
+    if(r>1.0005){for(let n=0;n<400;n++){const a=Math.pow(r,-n),b=Math.pow(r,1-n),w=x(b)-x(a);if(w<0.25)break;
+      s+=`<rect class="od-g${n%2}${half?' od-hit':''}" x="${x(a)}" y="${y}" width="${w}" height="${h}"/>`;}}
+    else s+=`<rect class="od-g0" x="${L}" y="${y}" width="${W-L-R}" height="${h}"/>`;
+    s+=`<circle class="od-lim" cx="${L}" cy="${y+h/2}" r="4"/><text x="${L-8}" y="${y+h/2+4}" text-anchor="end">0</text>`;
+    svg.innerHTML=s;
+  }
   function show(){
     sl.value=Math.log(r)/Math.log(10);if(document.activeElement!==nb)nb.value=r.toFixed(4);
     out.textContent=Array.from({length:20},(_,n)=>fmt(Math.pow(r,-n))).join(',  ')+',  …';
+    eq.innerHTML='1 + 1/r + 1/r² + … = r/(r − 1)'+(r>1.0005?` <span class="v">= ${fmt(r/(r-1))}</span>`:' <span class="v">= ∞</span>');
+    draw();
   }
   const set=v=>{if(!isFinite(v))return;r=Math.min(10,Math.max(1,v));show();};
-  sl.addEventListener('input',e=>set(Math.pow(10,+e.target.value)));   // logarithmic slider
+  sl.addEventListener('input',e=>set(Math.pow(10,+e.target.value)));
   nb.addEventListener('change',e=>set(+e.target.value));
   show();
 })();
